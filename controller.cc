@@ -5,7 +5,8 @@
 ****/
 
 #include "universe.h"
-
+#include <stdint.h>
+#include <getopt.h>
 static bool invert = false;
 
 // Examine the robot's pixels vector and set the speed sensibly.

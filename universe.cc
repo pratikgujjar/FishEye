@@ -7,14 +7,14 @@
 #include <assert.h>
 #include <unistd.h>
 #include <sys/time.h>
-
+#include <cstring>
 #include "universe.h"
 using namespace Uni;
 
 const char* PROGNAME = "universe";
 
 #if GRAPHICS
-#include <GLUT/glut.h> // OS X users need <glut/glut.h> instead
+#include <GL/glut.h> // OS X users need <glut/glut.h> instead
 #endif
 
 namespace Uni {

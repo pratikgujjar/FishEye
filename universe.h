@@ -9,7 +9,7 @@
 #include <math.h> 
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <cstdint>
 #define GRAPHICS 1
 
 // handy STL iterator macro pair. Use FOR_EACH(I,C){ } to get an iterator I to
