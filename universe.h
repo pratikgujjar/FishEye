@@ -9,8 +9,9 @@
 #include <math.h> 
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <cstdint>
 #define GRAPHICS 1
+#define PI 3.1415
 
 // handy STL iterator macro pair. Use FOR_EACH(I,C){ } to get an iterator I to
 // each item in a collection C.
@@ -47,7 +48,12 @@ namespace Uni
     // non-static data members
     double pose[3] ;   // 2d pose and orientation [0]=x, [1]=y, [2]=a;
     double speed[2];   // linear speed [0] and angular speed [1]
-    uint8_t color[3];  // body color [0]=red, [1]=green, [2]=blue;
+    uint8_t color[3];  // body color [0]=red, [1]=green, [2]=blue
+
+    // Additions to support Bayesian decisions
+
+    float choice[2] = {0.5, 0.5}; // choice[0] = probability of laziness, choice[1] = probability of motion
+    float self_information = choice[0]/choice[1];
 
     class Pixel 
     {
@@ -75,7 +81,7 @@ namespace Uni
     
     // callback function for controlling this robot
     void (*callback)( Robot& r, void* user );
-    void* callback_data;;    
+    void* callback_data;
   };	
   
   extern std::vector<Robot> population;

@@ -7,21 +7,21 @@
 #include <assert.h>
 #include <unistd.h>
 #include <sys/time.h>
-
+#include <cstring>
 #include "universe.h"
 using namespace Uni;
 
 const char* PROGNAME = "universe";
 
 #if GRAPHICS
-#include <GLUT/glut.h> // OS X users need <glut/glut.h> instead
+#include <GL/glut.h> // OS X users need <glut/glut.h> instead
 #endif
 
 namespace Uni {
   
   bool need_redraw( true );
   double worldsize(1.0);
-  std::vector<Robot> population( 100 );
+  std::vector<Robot> population( 10 );
   uint64_t updates(0);
   uint64_t updates_max( 0.0 ); 
   bool paused( false );
@@ -114,9 +114,9 @@ Robot::Robot()
   // until C++ supports array literals in the initialization list, we're forced to do this
   memset( pose, 0, sizeof(pose));
   memset( speed, 0, sizeof(speed));
-  color[0] = 128;
+  color[0] = 0;
   color[1] = 0;
-  color[2] = 0;
+  color[2] = 255;
 }
 
 
@@ -130,7 +130,7 @@ void Uni::Init( int argc, char** argv )
 
   bool quiet = false; // controls output verbosity
 
-  int population_size = 100;
+  int population_size = 10;
   // parse arguments to configure Robot static members
   // opterr = 0; // supress errors about bad options
   int c;  
@@ -392,7 +392,7 @@ void Robot::Draw() const
       // render the sensors
       double rads_per_pixel = fov / (double)pixel_count;
       glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-      
+
       for( unsigned int p=0; p<pixel_count; p++ )
 	{
 	  double angle = -fov/2.0 + (p+0.5) * rads_per_pixel;
@@ -400,15 +400,17 @@ void Robot::Draw() const
 	  double dy1 = pixels[p].range * sin(angle+rads_per_pixel/2.0);
 	  double dx2 = pixels[p].range * cos(angle-rads_per_pixel/2.0);
 	  double dy2 = pixels[p].range * sin(angle-rads_per_pixel/2.0);
-	  
+
 	  glColor4f( 1,0,0, pixels[p].robot ? 0.2 : 0.05 );
-	  
+
 	  glBegin( GL_POLYGON );
 	  glVertex2f( 0,0 );
 	  glVertex2f( dx1, dy1 );
 	  glVertex2f( dx2, dy2 );
-	  glEnd();                  
-	}	  
+//      glVertex2f(dx1/5, dy1/5); //To draw happiness circle
+//      glVertex2f(dx2/5, dy2/5);
+      glEnd();
+	}
     }
   
   glPopMatrix();

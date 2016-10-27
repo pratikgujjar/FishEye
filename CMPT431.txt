@@ -29,7 +29,7 @@ You are free to choose any method that interests you, however you have
 limited time so choose something that you can implement quickly.
 
 The main distance calculation for one robot to fill its array of
-sensors is the Univers::Robot::UpdateSensors() method. 
+sensors is the Universe::Robot::UpdateSensors() method.
 
 Testing
 -------

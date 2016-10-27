@@ -5,7 +5,8 @@
 ****/
 
 #include "universe.h"
-
+#include <stdint.h>
+#include <getopt.h>
 static bool invert = false;
 
 // Examine the robot's pixels vector and set the speed sensibly.
@@ -14,7 +15,7 @@ void Controller( Uni::Robot& r, void* dummy_data )
   r.speed[0] = 0.005;   // constant forward speed 
   r.speed[1] = 0.0;     // no turning. we may change this below
   
-  // steer away from the closest roboot
+  // steer away from the closest robot
   int closest = -1;
   double dist = r.range; // max sensor range
   
@@ -43,7 +44,7 @@ int main( int argc, char* argv[] )
   // configure global robot settings
   Uni::Init( argc, argv );
   
-  // parse remaining cmdline arguments to configure swarmer
+  // parse remaining cmdline arguments to configure swarm
   int c=0;
   while( ( c = getopt( argc, argv, "i")) != -1 )
     switch( c )
