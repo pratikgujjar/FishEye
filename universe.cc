@@ -21,7 +21,7 @@ namespace Uni {
   
   bool need_redraw( true );
   double worldsize(1.0);
-  std::vector<Robot> population( 10 );
+  std::vector<Robot> population( 50 );
   uint64_t updates(0);
   uint64_t updates_max( 0.0 ); 
   bool paused( false );
@@ -102,18 +102,13 @@ static void mouse_func(int button, int state, int x, int y)
 #endif // GRAPHICS
 
 
-
-Robot::Robot()
-  : pose(),
-    speed(),
-    color(),
-    pixels( pixel_count ),
-    callback(NULL),
-    callback_data(NULL)
+Robot::Robot() : pose(), speed(), color(), preferences(), pixels( pixel_count ), callback(NULL), callback_data(NULL)
 {
   // until C++ supports array literals in the initialization list, we're forced to do this
   memset( pose, 0, sizeof(pose));
   memset( speed, 0, sizeof(speed));
+  preferences[0] = 0.7;
+  preferences[1] = 0.3;
   color[0] = 0;
   color[1] = 0;
   color[2] = 255;
@@ -130,14 +125,14 @@ void Uni::Init( int argc, char** argv )
 
   bool quiet = false; // controls output verbosity
 
-  int population_size = 10;
+  int population_size = 50;
   // parse arguments to configure Robot static members
   // opterr = 0; // supress errors about bad options
   int c;  
   while( ( c = getopt( argc, argv, ":?dqp:s:f:r:c:u:z:w:")) != -1 )
     switch( c )
       {
-      case 'p': 
+      case 'p':
 	population_size = atoi( optarg );
 	if( ! quiet ) fprintf( stderr, "[Uni] population_size: %d\n", population_size );
 	population.resize( population_size );
@@ -247,14 +242,15 @@ void Robot::UpdateSensor()
   double radians_per_pixel = fov / (double)pixel_count;
   
   double halfworld = worldsize * 0.5;
-  
+
   // initialize pixels vector  
   FOR_EACH( it, pixels )
     {
       it->range = Robot::range; // maximum range
       it->robot = NULL; // nothing detected
+      it->happy_robots_count = 0;
     }
-  
+
   // check every robot in the world to see if it is detected
   FOR_EACH( it, population )
     {
@@ -307,9 +303,13 @@ void Robot::UpdateSensor()
       assert( pixel >= 0 );
       assert( pixel < (int)pixel_count );
       
+      pixels[pixel].happy_robots_count++;
+
       // discard if we've seen something closer in this pixel already.
       if( pixels[pixel].range < range) 
-	continue;
+      {
+    	  continue;
+      }
       
       // if we made it here, we see this other robot in this pixel.
       pixels[pixel].range = range;
@@ -324,6 +324,18 @@ void Robot::UpdatePose()
   double dy = speed[0] * sin(pose[2]);; 
   double da = speed[1];
   
+  pose[0] = DistanceNormalize( pose[0] + dx );
+  pose[1] = DistanceNormalize( pose[1] + dy );
+  pose[2] = AngleNormalize( pose[2] + da );
+}
+
+void Robot::FollowBoss(Robot r)
+{
+  // move according to the boss' speed current speed
+  double dx = r.speed[0] * cos(pose[2]);
+  double dy = r.speed[0] * sin(pose[2]);;
+  double da = r.speed[1];
+
   pose[0] = DistanceNormalize( pose[0] + dx );
   pose[1] = DistanceNormalize( pose[1] + dy );
   pose[2] = AngleNormalize( pose[2] + da );
@@ -425,7 +437,7 @@ void Uni::Run()
   while( 1 )
     {
       FOR_EACH( r, population )
-	r->Update();
+    		  r->Update();
 #endif
 }
 

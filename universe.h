@@ -18,6 +18,9 @@
 #define VAR(V,init) __typeof(init) V=(init)
 #define FOR_EACH(I,C) for(VAR(I,(C).begin());I!=(C).end();I++)
 
+// define the social information parameter
+#define eta 1.55
+
 
 namespace Uni
 {
@@ -50,16 +53,15 @@ namespace Uni
     double speed[2];   // linear speed [0] and angular speed [1]
     uint8_t color[3];  // body color [0]=red, [1]=green, [2]=blue
 
-    // Additions to support Bayesian decisions
-
-    float choice[2] = {0.5, 0.5}; // choice[0] = probability of laziness, choice[1] = probability of motion
-    float self_information = choice[0]/choice[1];
+    // Addition to support Bayesian decisions
+    float preferences[2]; // choice[0] = probability of laziness, choice[1] = probability of motion
 
     class Pixel 
     {
     public:
       double range; // between zero and Robot::range
       Robot* robot; // closest robot detected or NULL if nothing detected
+      int happy_robots_count; // number of rewarded robots in the pixel
     };
     
     std::vector<Pixel> pixels; // sensor array
@@ -78,6 +80,12 @@ namespace Uni
     
     // update
     void UpdateSensor();
+
+    // Determine Boss
+    Robot DetermineBoss();
+
+    // Follow Robot
+    void FollowBoss(Robot r);
     
     // callback function for controlling this robot
     void (*callback)( Robot& r, void* user );
