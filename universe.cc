@@ -105,6 +105,8 @@ static void mouse_func(int button, int state, int x, int y)
 Robot::Robot() : pose(), speed(), color(), preferences(), pixels( pixel_count ), callback(NULL), callback_data(NULL)
 {
   // until C++ supports array literals in the initialization list, we're forced to do this
+  static int colour_differentiator = 0;
+  colour_differentiator++;
   memset( pose, 0, sizeof(pose));
   memset( speed, 0, sizeof(speed));
   preferences[0] = 0.7;
@@ -112,6 +114,7 @@ Robot::Robot() : pose(), speed(), color(), preferences(), pixels( pixel_count ),
   color[0] = 0;
   color[1] = 0;
   color[2] = 255;
+  cout << "count=" << colour_differentiator << '\n'
 }
 
 
