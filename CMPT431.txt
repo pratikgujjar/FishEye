@@ -18,7 +18,7 @@ computations, where m < n. The goal is for the sum of the run time of
 all the sequential computations to be less than that of the original.
 
 The problem of measuring the distance between all n robots must be
-partioned somehow. We discussed in class some ideas about partitioning
+partitioned somehow. We discussed in class some ideas about partitioning
 space into contiguous sections. Other approaches exist, such as
 hierarchical space decomposition such as quad trees and pyramids
 (explained in any computer graphics text). Various clustering methods
