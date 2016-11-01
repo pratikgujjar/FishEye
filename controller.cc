@@ -10,16 +10,16 @@
 #include <iostream>
 static bool invert = true;
 
-bool Decide(int num, Uni::Robot r)
+bool Decide(int red_robots, int blue_robots, Uni::Robot r)
 {
+	std::cout << "Blue robots" << blue_robots << '\n';
 	float red_self_preference = r.preferences[0]/r.preferences[1];
 	float blue_self_preference = r.preferences[0]/r.preferences[2];
-	if(1/(1 + (red_self_preference * (pow(eta,-(num))))) >  r.preferences[0])
+	if(1/(1 + (red_self_preference * (pow(eta,-(red_robots))))) >  r.preferences[0])
 		return 1;
-	if(1/(1 + (blue_self_preference * (pow(eta,-(num))))) >  r.preferences[0])
+	if(1/(1 + (blue_self_preference * (pow(eta,-(blue_robots))))) >  r.preferences[0])
 		return 2;
-	else
-		return 0;
+	return 0;
 }
 
 // Examine the robot's pixels vector and set the speed sensibly.
@@ -30,30 +30,67 @@ void Controller( Uni::Robot& r, void* dummy_data )
   
   // steer away from the closest robot
   int closest = -1;
+  int closest_red = -1;
+  int closest_blue = -1;
   double dist = r.range; // max sensor range
   int red_robots_inrange = 0;
   int blue_robots_inrange = 0;
   
   const size_t pixel_count = r.pixels.size();
-  for( unsigned int p=0; p<pixel_count; p++ )
-    if( r.pixels[p].range < dist )
+
+  for( unsigned int p=0; p<pixel_count; p++ ){
+ 	  if( r.pixels[p].range < dist)
+       {
+ 			  closest = (int)p;
+ 			  dist = r.pixels[p].range;
+       }
+   }
+
+  dist = r.range;
+  for( unsigned int p=0; p<pixel_count; p++ ){
+	  if( r.pixels[p].range < dist && r.pixels[p].robot->color[0] == 255 )
       {
-    	closest = (int)p;
-    	dist = r.pixels[p].range;
-    	red_robots_inrange += r.pixels[p].red_robots;
-    	blue_robots_inrange += r.pixels[p].blue_robots;
+			  closest_red = (int)p;
+			  dist = r.pixels[p].range;
       }
-  
-  if( closest < 0 ) // nothing nearby: cruise
+  }
+
+  dist = r.range;
+  for (unsigned int p=0; p<pixel_count; p++){
+	  if( r.pixels[p].range < dist && r.pixels[p].robot->color[2] == 255 )
+	  {
+			  closest_blue = (int)p;
+			  dist = r.pixels[p].range;
+	  }
+	  red_robots_inrange += r.pixels[p].red_robots;
+	  blue_robots_inrange += r.pixels[p].blue_robots;
+  }
+
+  if( closest_red < 0 && closest_blue < 0) // nothing nearby: cruise
     return;
 
   //A robot is nearby, decide whether to follow the closest robot
-  if (Decide(happy_robots_count, r) == true)
+  int decision = Decide(red_robots_inrange, blue_robots_inrange, r);
+
+  switch(decision)
   {
 	//std::cout << "Decision True" << '\n' << happy_robots_count << '\n';
 	//std::cout << r.pose[2] << '\n';
 	//std::cout << r.pixels[closest].robot->pose[2] << '\n';
-	r.pose[2] = r.pixels[closest].robot->pose[2];
+  	  case 0: if( closest < (int)pixel_count / 2 )
+  		  	  	  r.speed[1] = 0.04; // rotate right
+  	  	  	  else
+ 	  		  	  r.speed[1] = -0.04; // rotate left
+  	  	  	  break;
+  	  case 1: //std::cout << "Follow red" << '\n';
+  		  	  if(closest_red > -1)
+  		  	  	  r.pose[2] = r.pixels[closest_red].robot->pose[2];
+  	  	  	  break;
+  	  case 2: std::cout << "Follow blue" << '\n';
+  		  	  if(closest_blue > -1)
+  		  	  	  r.pose[2] = r.pixels[closest_blue].robot->pose[2];
+  	  	  	  break;
+
   }
 }
 

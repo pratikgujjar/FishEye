@@ -22,7 +22,7 @@ namespace Uni {
   
   bool need_redraw( true );
   double worldsize(1.0);
-  std::vector<Robot> population( 50 );
+  std::vector<Robot> population( 30 );
   uint64_t updates(0);
   uint64_t updates_max( 0.0 ); 
   bool paused( false );
@@ -118,8 +118,8 @@ Robot::Robot() : pose(), speed(), color(), preferences(), pixels( pixel_count ),
 	  color[2] = 255;
 
 	  preferences[0] = 0.6;
-	  preferences[1] = 0.1;
-	  preferences[2] = 0.3;
+	  preferences[1] = 0.001;
+	  preferences[2] = 0.399;
 
   }
   else{
@@ -129,8 +129,8 @@ Robot::Robot() : pose(), speed(), color(), preferences(), pixels( pixel_count ),
 	  color[2] = 0;
 
 	  preferences[0] = 0.6;
-	  preferences[1] = 0.3;
-	  preferences[2] = 0.1;
+	  preferences[1] = 0.399;
+	  preferences[2] = 0.001;
   }
 }
 
@@ -145,7 +145,7 @@ void Uni::Init( int argc, char** argv )
 
   bool quiet = false; // controls output verbosity
 
-  int population_size = 50;
+  int population_size = 30;
   // parse arguments to configure Robot static members
   // opterr = 0; // supress errors about bad options
   int c;  
@@ -323,11 +323,6 @@ void Robot::UpdateSensor()
       
       assert( pixel >= 0 );
       assert( pixel < (int)pixel_count );
-      
-      if(pixels[pixel].robot->color[0] == 255)
-    	  pixels[pixel].red_robots++;
-      else
-    	  pixels[pixel].blue_robots++;
 
       // discard if we've seen something closer in this pixel already.
       if( pixels[pixel].range < range) 
@@ -338,6 +333,11 @@ void Robot::UpdateSensor()
       // if we made it here, we see this other robot in this pixel.
       pixels[pixel].range = range;
       pixels[pixel].robot = other;
+
+      if(pixels[pixel].robot->color[0] == 255)
+    	  pixels[pixel].red_robots++;
+      else
+    	  pixels[pixel].blue_robots++;
     }	
 }
 

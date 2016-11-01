@@ -19,7 +19,7 @@
 #define FOR_EACH(I,C) for(VAR(I,(C).begin());I!=(C).end();I++)
 
 // define the social information parameter
-#define eta 1.55
+#define eta 1.51
 
 
 namespace Uni
@@ -44,7 +44,7 @@ namespace Uni
   {
   public:
     // static data members (same for all instances)
-    static double range;      // sensor detects objects up tp this maximum distance
+    static double range;      // sensor detects objects up to this maximum distance
     static double fov;        // sensor detects objects within this angular field-of-view     
     static unsigned int  pixel_count; // number of pixels in sensor array
     
