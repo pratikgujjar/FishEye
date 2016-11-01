@@ -9,6 +9,7 @@
 #include <sys/time.h>
 #include <cstring>
 #include "universe.h"
+#include <iostream>
 using namespace Uni;
 
 const char* PROGNAME = "universe";
@@ -21,7 +22,7 @@ namespace Uni {
   
   bool need_redraw( true );
   double worldsize(1.0);
-  std::vector<Robot> population( 100 );
+  std::vector<Robot> population( 50 );
   uint64_t updates(0);
   uint64_t updates_max( 0.0 ); 
   bool paused( false );
@@ -102,21 +103,35 @@ static void mouse_func(int button, int state, int x, int y)
 #endif // GRAPHICS
 
 
-
-Robot::Robot()
-  : pose(),
-    speed(),
-    color(),
-    pixels( pixel_count ),
-    callback(NULL),
-    callback_data(NULL)
+Robot::Robot() : pose(), speed(), color(), preferences(), pixels( pixel_count ), callback(NULL), callback_data(NULL)
 {
   // until C++ supports array literals in the initialization list, we're forced to do this
+  static int colour_differentiator = 0;
+  colour_differentiator++;
   memset( pose, 0, sizeof(pose));
   memset( speed, 0, sizeof(speed));
-  color[0] = 128;
-  color[1] = 0;
-  color[2] = 0;
+
+  if(colour_differentiator % 2 == 0){
+	  //Make Robots blue and prefer blue
+	  color[0] = 0;
+	  color[1] = 0;
+	  color[2] = 255;
+
+	  preferences[0] = 0.6;
+	  preferences[1] = 0.1;
+	  preferences[2] = 0.3;
+
+  }
+  else{
+	  // Make robots red and prefer red
+	  color[0] = 255;
+	  color[1] = 0;
+	  color[2] = 0;
+
+	  preferences[0] = 0.6;
+	  preferences[1] = 0.3;
+	  preferences[2] = 0.1;
+  }
 }
 
 
@@ -130,14 +145,14 @@ void Uni::Init( int argc, char** argv )
 
   bool quiet = false; // controls output verbosity
 
-  int population_size = 100;
+  int population_size = 50;
   // parse arguments to configure Robot static members
   // opterr = 0; // supress errors about bad options
   int c;  
   while( ( c = getopt( argc, argv, ":?dqp:s:f:r:c:u:z:w:")) != -1 )
     switch( c )
       {
-      case 'p': 
+      case 'p':
 	population_size = atoi( optarg );
 	if( ! quiet ) fprintf( stderr, "[Uni] population_size: %d\n", population_size );
 	population.resize( population_size );
@@ -247,14 +262,16 @@ void Robot::UpdateSensor()
   double radians_per_pixel = fov / (double)pixel_count;
   
   double halfworld = worldsize * 0.5;
-  
+
   // initialize pixels vector  
   FOR_EACH( it, pixels )
     {
       it->range = Robot::range; // maximum range
       it->robot = NULL; // nothing detected
+      it->red_robots = 0;
+      it->blue_robots = 0;
     }
-  
+
   // check every robot in the world to see if it is detected
   FOR_EACH( it, population )
     {
@@ -307,9 +324,16 @@ void Robot::UpdateSensor()
       assert( pixel >= 0 );
       assert( pixel < (int)pixel_count );
       
+      if(pixels[pixel].robot->color[0] == 255)
+    	  pixels[pixel].red_robots++;
+      else
+    	  pixels[pixel].blue_robots++;
+
       // discard if we've seen something closer in this pixel already.
       if( pixels[pixel].range < range) 
-	continue;
+      {
+    	  continue;
+      }
       
       // if we made it here, we see this other robot in this pixel.
       pixels[pixel].range = range;
@@ -324,6 +348,18 @@ void Robot::UpdatePose()
   double dy = speed[0] * sin(pose[2]);; 
   double da = speed[1];
   
+  pose[0] = DistanceNormalize( pose[0] + dx );
+  pose[1] = DistanceNormalize( pose[1] + dy );
+  pose[2] = AngleNormalize( pose[2] + da );
+}
+
+void Robot::FollowBoss(Robot r)
+{
+  // move according to the boss' speed current speed
+  double dx = r.speed[0] * cos(pose[2]);
+  double dy = r.speed[0] * sin(pose[2]);;
+  double da = r.speed[1];
+
   pose[0] = DistanceNormalize( pose[0] + dx );
   pose[1] = DistanceNormalize( pose[1] + dy );
   pose[2] = AngleNormalize( pose[2] + da );
@@ -392,7 +428,7 @@ void Robot::Draw() const
       // render the sensors
       double rads_per_pixel = fov / (double)pixel_count;
       glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-      
+
       for( unsigned int p=0; p<pixel_count; p++ )
 	{
 	  double angle = -fov/2.0 + (p+0.5) * rads_per_pixel;
@@ -400,15 +436,17 @@ void Robot::Draw() const
 	  double dy1 = pixels[p].range * sin(angle+rads_per_pixel/2.0);
 	  double dx2 = pixels[p].range * cos(angle-rads_per_pixel/2.0);
 	  double dy2 = pixels[p].range * sin(angle-rads_per_pixel/2.0);
-	  
+
 	  glColor4f( 1,0,0, pixels[p].robot ? 0.2 : 0.05 );
-	  
+
 	  glBegin( GL_POLYGON );
 	  glVertex2f( 0,0 );
 	  glVertex2f( dx1, dy1 );
 	  glVertex2f( dx2, dy2 );
-	  glEnd();                  
-	}	  
+//      glVertex2f(dx1/5, dy1/5); //To draw happiness circle
+//      glVertex2f(dx2/5, dy2/5);
+      glEnd();
+	}
     }
   
   glPopMatrix();
@@ -423,7 +461,7 @@ void Uni::Run()
   while( 1 )
     {
       FOR_EACH( r, population )
-	r->Update();
+    		  r->Update();
 #endif
 }
 

@@ -11,11 +11,15 @@
 #include <stdlib.h>
 #include <cstdint>
 #define GRAPHICS 1
+#define PI 3.1415
 
 // handy STL iterator macro pair. Use FOR_EACH(I,C){ } to get an iterator I to
 // each item in a collection C.
 #define VAR(V,init) __typeof(init) V=(init)
 #define FOR_EACH(I,C) for(VAR(I,(C).begin());I!=(C).end();I++)
+
+// define the social information parameter
+#define eta 1.55
 
 
 namespace Uni
@@ -47,13 +51,18 @@ namespace Uni
     // non-static data members
     double pose[3] ;   // 2d pose and orientation [0]=x, [1]=y, [2]=a;
     double speed[2];   // linear speed [0] and angular speed [1]
-    uint8_t color[3];  // body color [0]=red, [1]=green, [2]=blue;
+    uint8_t color[3];  // body color [0]=red, [1]=green, [2]=blue
+
+    // Addition to support Bayesian decisions
+    float preferences[3]; // choice[0] = probability of laziness, choice[1] = probability of joining red group, choice[2] = joining blue group
 
     class Pixel 
     {
     public:
       double range; // between zero and Robot::range
       Robot* robot; // closest robot detected or NULL if nothing detected
+      int red_robots; // number of rewarded red robots in the pixel
+      int blue_robots;  // number of rewarded blue robots in the pixel
     };
     
     std::vector<Pixel> pixels; // sensor array
@@ -72,10 +81,16 @@ namespace Uni
     
     // update
     void UpdateSensor();
+
+    // Determine Boss
+    Robot DetermineBoss();
+
+    // Follow Robot
+    void FollowBoss(Robot r);
     
     // callback function for controlling this robot
     void (*callback)( Robot& r, void* user );
-    void* callback_data;;    
+    void* callback_data;
   };	
   
   extern std::vector<Robot> population;
