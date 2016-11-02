@@ -353,18 +353,6 @@ void Robot::UpdatePose()
   pose[2] = AngleNormalize( pose[2] + da );
 }
 
-void Robot::FollowBoss(Robot r)
-{
-  // move according to the boss' speed current speed
-  double dx = r.speed[0] * cos(pose[2]);
-  double dy = r.speed[0] * sin(pose[2]);;
-  double da = r.speed[1];
-
-  pose[0] = DistanceNormalize( pose[0] + dx );
-  pose[1] = DistanceNormalize( pose[1] + dy );
-  pose[2] = AngleNormalize( pose[2] + da );
-}
-
 void Uni::UpdateAll()
 {
   // if we've done enough updates, exit the program
@@ -437,14 +425,15 @@ void Robot::Draw() const
 	  double dx2 = pixels[p].range * cos(angle-rads_per_pixel/2.0);
 	  double dy2 = pixels[p].range * sin(angle-rads_per_pixel/2.0);
 
-	  glColor4f( 1,0,0, pixels[p].robot ? 0.2 : 0.05 );
+	  if (color[0]==255)
+		  glColor4f( 1,0,0, pixels[p].robot ? 0.2 : 0.05 );
+	  else
+		  glColor4f( 0,0,1, pixels[p].robot ? 0.2 : 0.05 );
 
 	  glBegin( GL_POLYGON );
 	  glVertex2f( 0,0 );
 	  glVertex2f( dx1, dy1 );
 	  glVertex2f( dx2, dy2 );
-//      glVertex2f(dx1/5, dy1/5); //To draw happiness circle
-//      glVertex2f(dx2/5, dy2/5);
       glEnd();
 	}
     }

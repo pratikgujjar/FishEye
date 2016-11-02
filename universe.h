@@ -19,7 +19,7 @@
 #define FOR_EACH(I,C) for(VAR(I,(C).begin());I!=(C).end();I++)
 
 // define the social information parameter
-#define eta 1.51
+#define eta 1.52
 
 
 namespace Uni
@@ -85,9 +85,6 @@ namespace Uni
     // Determine Boss
     Robot DetermineBoss();
 
-    // Follow Robot
-    void FollowBoss(Robot r);
-    
     // callback function for controlling this robot
     void (*callback)( Robot& r, void* user );
     void* callback_data;

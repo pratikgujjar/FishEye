@@ -10,9 +10,8 @@
 #include <iostream>
 static bool invert = true;
 
-bool Decide(int red_robots, int blue_robots, Uni::Robot r)
+int Decide(int red_robots, int blue_robots, Uni::Robot r)
 {
-	std::cout << "Blue robots" << blue_robots << '\n';
 	float red_self_preference = r.preferences[0]/r.preferences[1];
 	float blue_self_preference = r.preferences[0]/r.preferences[2];
 	if(1/(1 + (red_self_preference * (pow(eta,-(red_robots))))) >  r.preferences[0])
@@ -74,20 +73,17 @@ void Controller( Uni::Robot& r, void* dummy_data )
 
   switch(decision)
   {
-	//std::cout << "Decision True" << '\n' << happy_robots_count << '\n';
-	//std::cout << r.pose[2] << '\n';
-	//std::cout << r.pixels[closest].robot->pose[2] << '\n';
-  	  case 0: if( closest < (int)pixel_count / 2 )
-  		  	  	  r.speed[1] = 0.04; // rotate right
-  	  	  	  else
- 	  		  	  r.speed[1] = -0.04; // rotate left
+  	  case 0: if(closest_red > -1){
+  		  	  	  if( closest < (int)pixel_count / 2 )
+  		  	  		  r.speed[1] = 0.04; // rotate right
+  		  	  	  else
+  		  	  		  r.speed[1] = -0.04; // rotate left
+  	  	  	  }
   	  	  	  break;
-  	  case 1: //std::cout << "Follow red" << '\n';
-  		  	  if(closest_red > -1)
+  	  case 1: if(closest_red > -1)
   		  	  	  r.pose[2] = r.pixels[closest_red].robot->pose[2];
   	  	  	  break;
-  	  case 2: std::cout << "Follow blue" << '\n';
-  		  	  if(closest_blue > -1)
+  	  case 2: if(closest_blue > -1)
   		  	  	  r.pose[2] = r.pixels[closest_blue].robot->pose[2];
   	  	  	  break;
 
