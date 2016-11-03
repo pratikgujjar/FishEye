@@ -73,7 +73,7 @@ void Controller( Uni::Robot& r, void* dummy_data )
 
   switch(decision)
   {
-  	  case 0: if(closest_red > -1){
+  	  case 0: if(closest > -1){
   		  	  	  if( closest < (int)pixel_count / 2 )
   		  	  		  r.speed[1] = 0.04; // rotate right
   		  	  	  else
