@@ -19,7 +19,7 @@
 #define FOR_EACH(I,C) for(VAR(I,(C).begin());I!=(C).end();I++)
 
 // define the social information parameter
-#define eta 1.52
+#define eta 1.55
 
 
 namespace Uni
