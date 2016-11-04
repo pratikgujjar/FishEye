@@ -28,6 +28,7 @@ namespace Uni {
   bool paused( false );
   int winsize( 600 );
   int displaylist(0);
+  int rewarddisplaylist(0);
   bool show_data( true );
   unsigned int sleep_msec( 50 );
   
@@ -250,6 +251,24 @@ void Uni::Init( int argc, char** argv )
   glEnd();
 
   glEndList();
+
+  // define a rewarded polygon shape
+	double r = 0.015;
+	glPointSize( 4.0 );
+	rewarddisplaylist = glGenLists(1);
+	glNewList( rewarddisplaylist, GL_COMPILE );
+
+	//glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+
+	glBegin( GL_LINE_LOOP);
+	for (double i = 0; i < 180; i = i+0.1)
+		{
+			glVertex3f(r * cos(i),r * sin(i),0);
+
+		}
+	glEnd();
+
+	glEndList();
 #endif // GRAPHICS
 
   struct timeval start;
@@ -410,6 +429,7 @@ void Robot::Draw() const
   
   // draw the pre-compiled triangle for a body
   glCallList(displaylist);
+  glCallList(rewarddisplaylist);
   
   if( show_data )
     {

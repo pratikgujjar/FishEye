@@ -100,6 +100,7 @@ int main( int argc, char* argv[] )
   while( ( c = getopt( argc, argv, "i")) != -1 )
     switch( c )
       {
+    	std::cout << "Inverting enabled" << '\n';
       case 'i': invert = true;
 	puts( "[Ctrl] invert" );
 	break;				
