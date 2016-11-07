@@ -104,13 +104,16 @@ static void mouse_func(int button, int state, int x, int y)
 #endif // GRAPHICS
 
 
-Robot::Robot() : pose(), speed(), color(), preferences(), pixels( pixel_count ), callback(NULL), callback_data(NULL)
+Robot::Robot() : pose(), speed(), color(), reward(), memory(), preferences(),
+		pixels( pixel_count ), callback(NULL), callback_data(NULL)
 {
   // until C++ supports array literals in the initialization list, we're forced to do this
   static int colour_differentiator = 0;
   colour_differentiator++;
   memset( pose, 0, sizeof(pose));
   memset( speed, 0, sizeof(speed));
+  reward = false;
+  memory = 0;
 
   if(colour_differentiator % 2 == 0){
 	  //Make Robots blue and prefer blue
@@ -252,18 +255,16 @@ void Uni::Init( int argc, char** argv )
 
   glEndList();
 
-  // define a rewarded polygon shape
+  // define a rewarded circle
 	double r = 0.015;
-	glPointSize( 4.0 );
+	glPointSize( 1.0 );
 	rewarddisplaylist = glGenLists(1);
 	glNewList( rewarddisplaylist, GL_COMPILE );
 
-	//glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-
-	glBegin( GL_LINE_LOOP);
-	for (double i = 0; i < 180; i = i+0.1)
+	glBegin( GL_POINTS);
+	for (double i = 0; i < 360; i = i+ 0.1)
 		{
-			glVertex3f(r * cos(i),r * sin(i),0);
+			glVertex3f(r * cos(dtor(i)),r * sin(dtor(i)),0);
 
 		}
 	glEnd();
@@ -274,6 +275,45 @@ void Uni::Init( int argc, char** argv )
   struct timeval start;
   gettimeofday( &start, NULL );
   lastseconds =  start.tv_sec + start.tv_usec/1e6;
+}
+
+// To have 5 red rewarded robots and 5 blue rewarded robots
+void Reward_Robot(Uni::Robot *r, int pixel){
+	static bool wasExecuted = false;
+	static bool redDone = false;
+	static bool blueDone = false;
+	static int redCount = 0;  // Need 5 rewarded reds
+	static int blueCount = 0; // Need 5 rewarded blues
+	if(!wasExecuted){
+		if(!redDone){
+			if(r->color[0] == 255){
+				if(r->pixels[pixel].robot->color[0] == 255)
+					r->memory++;
+
+				if(r->memory > reward_threshold && r->reward == false){
+					r->reward = true;
+					redCount++;
+					if(redCount >= 5)
+						redDone = true;
+				}
+			}
+		}
+		if(!blueDone){
+			if(r->color[2] == 255){
+				if(r->pixels[pixel].robot->color[2] == 255)
+					r->memory++;
+
+				if(r->memory > reward_threshold && r->reward == false){
+					r->reward = true;
+					blueCount++;
+					if(blueCount >= 5)
+						blueDone = true;
+				}
+			}
+		}
+		if(redDone && blueDone)
+			wasExecuted = true;
+	}
 }
 
 void Robot::UpdateSensor()
@@ -345,19 +385,19 @@ void Robot::UpdateSensor()
 
       // discard if we've seen something closer in this pixel already.
       if( pixels[pixel].range < range) 
-      {
     	  continue;
-      }
       
       // if we made it here, we see this other robot in this pixel.
       pixels[pixel].range = range;
       pixels[pixel].robot = other;
 
-      if(pixels[pixel].robot->color[0] == 255)
+      if(pixels[pixel].robot->color[0] == 255 && pixels[pixel].robot->reward == true)
     	  pixels[pixel].red_robots++;
-      else
-    	  pixels[pixel].blue_robots++;
-    }	
+      else if(pixels[pixel].robot->color[2] == 255 && pixels[pixel].robot->reward == true)
+    	  	  pixels[pixel].blue_robots++;
+
+      Reward_Robot(this, pixel);
+    }
 }
 
 void Robot::UpdatePose()
@@ -429,7 +469,8 @@ void Robot::Draw() const
   
   // draw the pre-compiled triangle for a body
   glCallList(displaylist);
-  glCallList(rewarddisplaylist);
+  if (reward)
+	  glCallList(rewarddisplaylist);
   
   if( show_data )
     {

@@ -47,7 +47,7 @@ void Controller( Uni::Robot& r, void* dummy_data )
 
   dist = r.range;
   for( unsigned int p=0; p<pixel_count; p++ ){
-	  if( r.pixels[p].range < dist && r.pixels[p].robot->color[0] == 255 )
+	  if( r.pixels[p].range < dist && r.pixels[p].robot->color[0] == 255 && r.pixels[p].robot->reward == true )
       {
 			  closest_red = (int)p;
 			  dist = r.pixels[p].range;
@@ -56,7 +56,7 @@ void Controller( Uni::Robot& r, void* dummy_data )
 
   dist = r.range;
   for (unsigned int p=0; p<pixel_count; p++){
-	  if( r.pixels[p].range < dist && r.pixels[p].robot->color[2] == 255 )
+	  if( r.pixels[p].range < dist && r.pixels[p].robot->color[2] == 255 && r.pixels[p].robot->reward == true )
 	  {
 			  closest_blue = (int)p;
 			  dist = r.pixels[p].range;
@@ -73,18 +73,20 @@ void Controller( Uni::Robot& r, void* dummy_data )
 
   switch(decision)
   {
-  	  case 0: if(closest > -1){
+  	  case 0: /*if(closest > -1){
   		  	  	  if( closest < (int)pixel_count / 2 )
   		  	  		  r.speed[1] = 0.04; // rotate right
   		  	  	  else
   		  	  		  r.speed[1] = -0.04; // rotate left
-  	  	  	  }
+  	  	  	  }*/
   	  	  	  break;
   	  case 1: if(closest_red > -1)
   		  	  	  r.pose[2] = r.pixels[closest_red].robot->pose[2];
+  	  	  	  	  r.reward = true;
   	  	  	  break;
   	  case 2: if(closest_blue > -1)
   		  	  	  r.pose[2] = r.pixels[closest_blue].robot->pose[2];
+  	  	  	  	  r.reward = true;
   	  	  	  break;
 
   }

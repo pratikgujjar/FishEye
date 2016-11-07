@@ -20,6 +20,7 @@
 
 // define the social information parameter
 #define eta 1.55
+#define reward_threshold 100
 
 
 namespace Uni
@@ -53,6 +54,7 @@ namespace Uni
     double speed[2];   // linear speed [0] and angular speed [1]
     uint8_t color[3];  // body color [0]=red, [1]=green, [2]=blue
     bool reward; 	   // Is the robot rewarded
+    int memory;		   // To evaluate reward
 
     // Addition to support Bayesian decisions
     float preferences[3]; // choice[0] = probability of laziness, choice[1] = probability of joining red group, choice[2] = joining blue group
