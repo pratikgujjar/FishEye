@@ -394,7 +394,7 @@ void Robot::UpdateSensor()
       if(pixels[pixel].robot->color[0] == 255 && pixels[pixel].robot->reward == true)
     	  pixels[pixel].red_robots++;
       else if(pixels[pixel].robot->color[2] == 255 && pixels[pixel].robot->reward == true)
-    	  	  pixels[pixel].blue_robots++;
+    	  pixels[pixel].blue_robots++;
 
       Reward_Robot(this, pixel);
     }
@@ -404,7 +404,7 @@ void Robot::UpdatePose()
 {
   // move according to the current speed 
   double dx = speed[0] * cos(pose[2]);
-  double dy = speed[0] * sin(pose[2]);; 
+  double dy = speed[0] * sin(pose[2]);
   double da = speed[1];
   
   pose[0] = DistanceNormalize( pose[0] + dx );

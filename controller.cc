@@ -8,7 +8,8 @@
 #include <stdint.h>
 #include <getopt.h>
 #include <iostream>
-static bool invert = true;
+
+static bool invert = false;
 
 int Decide(int red_robots, int blue_robots, Uni::Robot r)
 {
@@ -35,6 +36,13 @@ void Controller( Uni::Robot& r, void* dummy_data )
   int red_robots_inrange = 0;
   int blue_robots_inrange = 0;
   
+  double relative_pose = 0;
+  double x_distance;
+  double x_speed;
+  unsigned int time;
+
+  Uni::Robot bot_in_memory = r;
+
   const size_t pixel_count = r.pixels.size();
 
   for( unsigned int p=0; p<pixel_count; p++ ){
@@ -80,12 +88,25 @@ void Controller( Uni::Robot& r, void* dummy_data )
   		  	  		  r.speed[1] = -0.04; // rotate left
   	  	  	  }*/
   	  	  	  break;
-  	  case 1: if(closest_red > -1)
-  		  	  	  r.pose[2] = r.pixels[closest_red].robot->pose[2];
-  	  	  	  	  r.reward = true;
+  	  case 1: if(closest_red > -1){
+  		  	  	  //r.pose[2] = r.pixels[closest_red].robot->pose[2];
+  		  	  	  if(r.pixels[closest_red].robot->pose[2] != r.pose[2]){
+  		  	  		  printf("run once");
+					  relative_pose = abs(r.pixels[closest_red].robot->pose[2] - r.pose[2]);
+					  x_distance = abs(r.pixels[closest_red].robot->pose[1] - r.pose[1]);
+					  time = Uni::sleep_msec;
+					  x_speed = x_distance/time;
+					  r.speed[0] = x_speed/sin(relative_pose);
+					  r.speed[1] = (r.pixels[closest_red].robot->pose[2] - r.pose[2]); // rotate right
+					  r.reward = true;
+  		  	  	  }
+  	  	  	  }
   	  	  	  break;
   	  case 2: if(closest_blue > -1)
-  		  	  	  r.pose[2] = r.pixels[closest_blue].robot->pose[2];
+  		  	  	  //r.pose[2] = r.pixels[closest_blue].robot->pose[2];
+  		  	  	  if(r.pixels[closest_blue].robot->pose[2] != r.pose[2])
+  		  		  	  r.speed[0] = 2 * 0.005;
+  		  	  	  r.speed[1] = (r.pixels[closest_blue].robot->pose[2] - r.pose[2]); // rotate right
   	  	  	  	  r.reward = true;
   	  	  	  break;
 
