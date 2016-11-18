@@ -20,7 +20,7 @@
 
 // define the social information parameter
 #define eta 1.55
-#define reward_threshold 100
+#define reward_threshold 30
 
 
 namespace Uni
@@ -40,6 +40,7 @@ namespace Uni
   extern uint64_t updates; // number of simulation steps so far	 
   extern uint64_t updates_max; // number of steps to run before quitting (0 means infinity)
   extern double worldsize; // side length of the toroidal world
+  extern unsigned int sleep_msec;
   
   class Robot
   {
