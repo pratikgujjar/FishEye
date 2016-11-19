@@ -9,7 +9,7 @@
 #include <getopt.h>
 #include <iostream>
 
-static bool invert = false;
+static bool invert = true;
 
 int Decide(int red_robots, int blue_robots, Uni::Robot r)
 {
@@ -28,6 +28,7 @@ void Controller( Uni::Robot& r, void* dummy_data )
   r.speed[0] = 0.005;   // constant forward speed 
   r.speed[1] = 0.0;     // no turning. we may change this below
   
+
   // steer away from the closest robot
   int closest = -1;
   int closest_red = -1;
@@ -36,6 +37,7 @@ void Controller( Uni::Robot& r, void* dummy_data )
   int red_robots_inrange = 0;
   int blue_robots_inrange = 0;
   
+  double halfworld = Uni::worldsize * 0.5;
   double relative_pose = 0;
   double x_distance;
   double x_speed;
@@ -90,23 +92,46 @@ void Controller( Uni::Robot& r, void* dummy_data )
   	  	  	  break;
   	  case 1: if(closest_red > -1){
   		  	  	  //r.pose[2] = r.pixels[closest_red].robot->pose[2];
-  		  	  	  if(r.pixels[closest_red].robot->pose[2] != r.pose[2]){
-  		  	  		  printf("run once");
-					  relative_pose = abs(r.pixels[closest_red].robot->pose[2] - r.pose[2]);
-					  x_distance = abs(r.pixels[closest_red].robot->pose[1] - r.pose[1]);
+  		  	  	  Uni::Robot* other = &(*r.pixels[closest_red].robot);
+  		  	  	  double dx = other->pose[0] - r.pose[0];
+
+				  // wrap around torus
+				  if( dx > halfworld )
+					  dx -= Uni::worldsize;
+				  else if( dx < -halfworld )
+					  dx += Uni::worldsize;
+
+				  double dy = other->pose[1] - r.pose[1];
+
+				  // wrap around torus
+				  if( dy > halfworld )
+					  dy -= Uni::worldsize;
+				  else if( dy < -halfworld )
+					  dy += Uni::worldsize;
+
+				  double range = hypot( dx, dy );
+
+				  double absolute_heading = atan2( dy, dx );
+				  double relative_heading = Uni::AngleNormalize((absolute_heading - r.pose[2]) );
+				  double relative_orientation = Uni::AngleNormalize(other->pose[2] - r.pose[2] ); //negative means right, positive means other is on the left
+				  double my_orientation = r.pose[2];
+
+  		  	  	  if(dx != 0){
+					  printf("my x pos: %f, his x pos: %f, x_distance: %f, relative pose = %f\n", r.pose[0], r.pixels[closest_red].robot->pose[0], x_distance, relative_pose );
 					  time = Uni::sleep_msec;
-					  x_speed = x_distance/time;
-					  r.speed[0] = x_speed/sin(relative_pose);
-					  r.speed[1] = (r.pixels[closest_red].robot->pose[2] - r.pose[2]); // rotate right
+					  x_speed = dx/time;
+					  printf("x velocity calculated: %f\n", x_speed );
+					  r.speed[0] = fabs(x_speed/cos(relative_pose));
+					  printf("linear velocity imparted: %f\n", r.speed[0] );
+					  r.speed[1] = relative_orientation; // rotate right
+					  printf("Angular velocity imparted: %f\n", r.speed[1] );
 					  r.reward = true;
   		  	  	  }
   	  	  	  }
   	  	  	  break;
   	  case 2: if(closest_blue > -1)
   		  	  	  //r.pose[2] = r.pixels[closest_blue].robot->pose[2];
-  		  	  	  if(r.pixels[closest_blue].robot->pose[2] != r.pose[2])
-  		  		  	  r.speed[0] = 2 * 0.005;
-  		  	  	  r.speed[1] = (r.pixels[closest_blue].robot->pose[2] - r.pose[2]); // rotate right
+  		  	  	  r.pose[2] = (r.pixels[closest_blue].robot->pose[2]); // rotate right
   	  	  	  	  r.reward = true;
   	  	  	  break;
 

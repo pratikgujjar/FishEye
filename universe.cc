@@ -22,7 +22,7 @@ namespace Uni {
   
   bool need_redraw( true );
   double worldsize(1.0);
-  std::vector<Robot> population( 30 );
+  std::vector<Robot> population( 20 );
   uint64_t updates(0);
   uint64_t updates_max( 0.0 ); 
   bool paused( false );
@@ -149,7 +149,7 @@ void Uni::Init( int argc, char** argv )
 
   bool quiet = false; // controls output verbosity
 
-  int population_size = 30;
+  int population_size = 20;
   // parse arguments to configure Robot static members
   // opterr = 0; // supress errors about bad options
   int c;  
