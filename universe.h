@@ -20,7 +20,7 @@
 
 // define the social information parameter
 #define eta 1.55
-#define reward_threshold 30
+#define reward_threshold 20
 
 
 namespace Uni

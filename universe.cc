@@ -22,7 +22,7 @@ namespace Uni {
   
   bool need_redraw( true );
   double worldsize(1.0);
-  std::vector<Robot> population( 20 );
+  std::vector<Robot> population( 4 );
   uint64_t updates(0);
   uint64_t updates_max( 0.0 ); 
   bool paused( false );
@@ -112,7 +112,7 @@ Robot::Robot() : pose(), speed(), color(), reward(), memory(), preferences(),
   colour_differentiator++;
   memset( pose, 0, sizeof(pose));
   memset( speed, 0, sizeof(speed));
-  reward = false;
+  reward = true;
   memory = 0;
 
   if(colour_differentiator % 2 == 0){
@@ -122,8 +122,8 @@ Robot::Robot() : pose(), speed(), color(), reward(), memory(), preferences(),
 	  color[2] = 255;
 
 	  preferences[0] = 0.6;
-	  preferences[1] = 0.001;
-	  preferences[2] = 0.399;
+	  preferences[1] = 0.00001;
+	  preferences[2] = 0.39999;
 
   }
   else{
@@ -133,8 +133,8 @@ Robot::Robot() : pose(), speed(), color(), reward(), memory(), preferences(),
 	  color[2] = 0;
 
 	  preferences[0] = 0.6;
-	  preferences[1] = 0.399;
-	  preferences[2] = 0.001;
+	  preferences[1] = 0.39999;
+	  preferences[2] = 0.00001;
   }
 }
 
@@ -149,7 +149,7 @@ void Uni::Init( int argc, char** argv )
 
   bool quiet = false; // controls output verbosity
 
-  int population_size = 20;
+  int population_size = 4;
   // parse arguments to configure Robot static members
   // opterr = 0; // supress errors about bad options
   int c;  

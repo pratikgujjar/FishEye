@@ -15,7 +15,7 @@ int Decide(int red_robots, int blue_robots, Uni::Robot r)
 {
 	float red_self_preference = r.preferences[0]/r.preferences[1];
 	float blue_self_preference = r.preferences[0]/r.preferences[2];
-	if(1/(1 + (red_self_preference * (pow(eta,-(red_robots))))) >  r.preferences[0])
+	if(1/(1 + (red_self_preference * (pow(eta,-(red_robots))))) >  0)//r.preferences[0])
 		return 1;
 	if(1/(1 + (blue_self_preference * (pow(eta,-(blue_robots))))) >  r.preferences[0])
 		return 2;
@@ -25,7 +25,7 @@ int Decide(int red_robots, int blue_robots, Uni::Robot r)
 // Examine the robot's pixels vector and set the speed sensibly.
 void Controller( Uni::Robot& r, void* dummy_data )
 { 
-  r.speed[0] = 0.005;   // constant forward speed 
+  r.speed[0] = 0.005;   // constant forward speed
   r.speed[1] = 0.0;     // no turning. we may change this below
   
 
@@ -33,6 +33,7 @@ void Controller( Uni::Robot& r, void* dummy_data )
   int closest = -1;
   int closest_red = -1;
   int closest_blue = -1;
+  int farthest_red = -1;
   double dist = r.range; // max sensor range
   int red_robots_inrange = 0;
   int blue_robots_inrange = 0;
@@ -63,6 +64,15 @@ void Controller( Uni::Robot& r, void* dummy_data )
 			  dist = r.pixels[p].range;
       }
   }
+
+  dist = 0;
+    for( unsigned int p=0; p<pixel_count; p++ ){
+  	  if( r.pixels[p].range > dist && r.pixels[p].range != r.range && r.pixels[p].robot->color[0] == 255 && r.pixels[p].robot->reward == true )
+        {
+  			  farthest_red = (int)p;
+  			  dist = r.pixels[p].range;
+        }
+    }
 
   dist = r.range;
   for (unsigned int p=0; p<pixel_count; p++){
@@ -112,21 +122,20 @@ void Controller( Uni::Robot& r, void* dummy_data )
 				  double range = hypot( dx, dy );
 
 				  double absolute_heading = atan2( dy, dx );
-				  double relative_heading = Uni::AngleNormalize((absolute_heading - r.pose[2]) );
-				  double relative_orientation = Uni::AngleNormalize(other->pose[2] - r.pose[2] ); //negative means right, positive means other is on the left
-				  double my_orientation = r.pose[2];
+				  //double relative_heading = Uni::AngleNormalize((absolute_heading - r.pose[2]) );
+				  double my_orientation =(r.pose[2]);
 
-  		  	  	  if(dx != 0){
-					  printf("my x pos: %f, his x pos: %f, x_distance: %f, relative pose = %f\n", r.pose[0], r.pixels[closest_red].robot->pose[0], x_distance, relative_pose );
-					  time = Uni::sleep_msec;
-					  x_speed = dx/time;
-					  printf("x velocity calculated: %f\n", x_speed );
-					  r.speed[0] = fabs(x_speed/cos(relative_pose));
-					  printf("linear velocity imparted: %f\n", r.speed[0] );
-					  r.speed[1] = relative_orientation; // rotate right
-					  printf("Angular velocity imparted: %f\n", r.speed[1] );
-					  r.reward = true;
-  		  	  	  }
+				  //double theta_error = (other->pose[2]- my_orientation );
+				  double theta_error = (absolute_heading - my_orientation );
+
+				  r.speed[1] = 0.2 * theta_error;
+
+				  //r.reward = true;
+
+//				  if(theta_error < 0.00174){
+//					  r.pose[2] = other->pose[2];
+//				  }
+
   	  	  	  }
   	  	  	  break;
   	  case 2: if(closest_blue > -1)
