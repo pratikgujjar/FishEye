@@ -22,7 +22,7 @@ namespace Uni {
   
   bool need_redraw( true );
   double worldsize(1.0);
-  std::vector<Robot> population( 20 );
+  std::vector<Robot> population( 4 );
   uint64_t updates(0);
   uint64_t updates_max( 0.0 ); 
   bool paused( false );
@@ -149,7 +149,7 @@ void Uni::Init( int argc, char** argv )
 
   bool quiet = false; // controls output verbosity
 
-  int population_size = 20;
+  int population_size = 4;
   // parse arguments to configure Robot static members
   // opterr = 0; // supress errors about bad options
   int c;  
@@ -396,7 +396,7 @@ void Robot::UpdateSensor()
       else if(pixels[pixel].robot->color[2] == 255 && pixels[pixel].robot->reward == true)
     	  pixels[pixel].blue_robots++;
 
-      Reward_Robot(this, pixel);
+      //Reward_Robot(this, pixel);
     }
 }
 

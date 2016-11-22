@@ -15,7 +15,7 @@ int Decide(int red_robots, int blue_robots, Uni::Robot r)
 {
 	float red_self_preference = r.preferences[0]/r.preferences[1];
 	float blue_self_preference = r.preferences[0]/r.preferences[2];
-	if(1/(1 + (red_self_preference * (pow(eta,-(red_robots))))) >  r.preferences[0])
+	if(1/(1 + (red_self_preference * (pow(eta,-(red_robots))))) >  0)
 		return 1;
 	if(1/(1 + (blue_self_preference * (pow(eta,-(blue_robots))))) >  r.preferences[0])
 		return 2;
@@ -33,12 +33,13 @@ void Controller( Uni::Robot& r, void* dummy_data )
   int closest = -1;
   int closest_red = -1;
   int closest_blue = -1;
+  int farthest_red = -1;
   double dist = r.range; // max sensor range
   int red_robots_inrange = 0;
   int blue_robots_inrange = 0;
+  static int number_manuevers = 0;
   
   double halfworld = Uni::worldsize * 0.5;
-  double relative_pose = 0;
   double x_distance;
   double x_speed;
   unsigned int time;
@@ -56,12 +57,18 @@ void Controller( Uni::Robot& r, void* dummy_data )
    }
 
   dist = r.range;
+  double dist2 = 0;
   for( unsigned int p=0; p<pixel_count; p++ ){
 	  if( r.pixels[p].range < dist && r.pixels[p].robot->color[0] == 255 && r.pixels[p].robot->reward == true )
       {
 			  closest_red = (int)p;
 			  dist = r.pixels[p].range;
       }
+	  if( r.pixels[p].range != r.range && r.pixels[p].range > dist2 && r.pixels[p].robot->color[0] == 255 && r.pixels[p].robot->reward == true )
+	  {
+			  farthest_red = (int)p;
+			  dist2 = r.pixels[p].range;
+	  }
   }
 
   dist = r.range;
@@ -74,6 +81,7 @@ void Controller( Uni::Robot& r, void* dummy_data )
 	  red_robots_inrange += r.pixels[p].red_robots;
 	  blue_robots_inrange += r.pixels[p].blue_robots;
   }
+
 
   if( closest_red < 0 && closest_blue < 0) // nothing nearby: cruise
     return;
@@ -91,11 +99,11 @@ void Controller( Uni::Robot& r, void* dummy_data )
   	  	  	  }*/
   	  	  	  break;
   	  case 1: if(closest_red > -1){
-  		  	  	  //r.pose[2] = r.pixels[closest_red].robot->pose[2];
   		  	  	  Uni::Robot* other = &(*r.pixels[closest_red].robot);
+
   		  	  	  double dx = other->pose[0] - r.pose[0];
 
-				  // wrap around torus
+  		  	  	  // wrap around torus
 				  if( dx > halfworld )
 					  dx -= Uni::worldsize;
 				  else if( dx < -halfworld )
@@ -111,22 +119,15 @@ void Controller( Uni::Robot& r, void* dummy_data )
 
 				  double range = hypot( dx, dy );
 
-				  double absolute_heading = atan2( dy, dx );
-				  double relative_heading = Uni::AngleNormalize((absolute_heading - r.pose[2]) );
-				  double relative_orientation = Uni::AngleNormalize(other->pose[2] - r.pose[2] ); //negative means right, positive means other is on the left
-				  double my_orientation = r.pose[2];
+  		  	  	  double absolute_heading = atan2( dy, dx );
+  		  	  	  double my_heading = r.pose[2];
+				  //double relative_heading = Uni::AngleNormalize((absolute_heading - r.pose[2]) );
+				  //double relative_orientation = Uni::AngleNormalize(other->pose[2] - r.pose[2] ); //negative means right, positive means other is on the left
 
-  		  	  	  if(dx != 0){
-					  printf("my x pos: %f, his x pos: %f, x_distance: %f, relative pose = %f\n", r.pose[0], r.pixels[closest_red].robot->pose[0], x_distance, relative_pose );
-					  time = Uni::sleep_msec;
-					  x_speed = dx/time;
-					  printf("x velocity calculated: %f\n", x_speed );
-					  r.speed[0] = fabs(x_speed/cos(relative_pose));
-					  printf("linear velocity imparted: %f\n", r.speed[0] );
-					  r.speed[1] = relative_orientation; // rotate right
-					  printf("Angular velocity imparted: %f\n", r.speed[1] );
-					  r.reward = true;
-  		  	  	  }
+				  double theta_error = absolute_heading - my_heading;
+				  r.speed[1] = 0.2 * theta_error;
+
+				  //r.reward = true;
   	  	  	  }
   	  	  	  break;
   	  case 2: if(closest_blue > -1)
@@ -142,6 +143,8 @@ int main( int argc, char* argv[] )
 {
   // configure global robot settings
   Uni::Init( argc, argv );
+  double masterpose[3];
+  int count = 0;
   
   // parse remaining cmdline arguments to configure swarm
   int c=0;
@@ -153,12 +156,21 @@ int main( int argc, char* argv[] )
 	puts( "[Ctrl] invert" );
 	break;				
       }
+  masterpose[0] = drand48() * Uni::worldsize;
+  masterpose[1] = drand48() * Uni::worldsize;
+  masterpose[2] = Uni::AngleNormalize( Uni::dtor(0));
   
   // configure the robots the way I want 'em
   FOR_EACH( r, Uni::population )
     {
-      Uni::RandomPose( r->pose ); 
-      
+	  //count++;
+      //if(count < 20)
+    	  Uni::RandomPose( r->pose );
+      /*else{
+    	  Uni::HighwayPose( r->pose, masterpose, r->color );
+    	  r->reward = true;
+      }*/
+
       // install our callback function
       r->callback = Controller;
       r->callback_data = NULL;

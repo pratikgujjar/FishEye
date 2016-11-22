@@ -20,7 +20,7 @@
 
 // define the social information parameter
 #define eta 1.55
-#define reward_threshold 30
+#define reward_threshold 5
 
 
 namespace Uni
@@ -56,6 +56,7 @@ namespace Uni
     uint8_t color[3];  // body color [0]=red, [1]=green, [2]=blue
     bool reward; 	   // Is the robot rewarded
     int memory;		   // To evaluate reward
+    int manouevre;	   // To determine manouvre number
 
     // Addition to support Bayesian decisions
     float preferences[3]; // choice[0] = probability of laziness, choice[1] = probability of joining red group, choice[2] = joining blue group
@@ -127,6 +128,17 @@ namespace Uni
     pose[0] = drand48() * worldsize;
     pose[1] = drand48() * worldsize;
     pose[2] = AngleNormalize( drand48() * (M_PI*2.0));
-  }    
+  }
+
+  inline void HighwayPose( double pose[3], double masterpose[3], uint8_t colour[3])
+    {
+      pose[0] = masterpose[0] = masterpose[0] - 0.04;
+
+      if(colour[0] == 255)
+    	  pose[1] = masterpose[1] - 0.08;
+      else
+    	  pose[1] = masterpose[1];
+      pose[2] = masterpose[2];
+    }
   
 }; // namespace Uni
