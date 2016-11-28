@@ -14,7 +14,7 @@ using namespace Uni;
 
 const char* PROGNAME = "universe";
 
-#define POPULATION_SIZE 20
+#define POPULATION_SIZE 30
 
 #if GRAPHICS
 #include <GL/glut.h> // OS X users need <glut/glut.h> instead
@@ -37,7 +37,7 @@ namespace Uni {
   double lastseconds; 
 
   // Robot static members
-  unsigned int Robot::pixel_count( 8);
+  unsigned int Robot::pixel_count( 100);
   double Robot::range( 0.2 );
   double Robot::fov(  dtor(270.0) );
 }

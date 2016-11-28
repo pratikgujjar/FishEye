@@ -125,7 +125,7 @@ void Controller( Uni::Robot& r, void* dummy_data )
   		  	  	  Uni::Robot* other = &(*r.pixels[closest_red_rewarded].robot);
   		  	  	  Uni::Robot* closer = &(*r.pixels[closest_red].robot);
 
-  		  	  	  other->color[2] = 255;
+  		  	  	  //other->color[2] = 255;
 
   		  	  	  double dx = other->pose[0] - r.pose[0];
 
@@ -148,13 +148,13 @@ void Controller( Uni::Robot& r, void* dummy_data )
 				  double relative_heading = fabs( other->pose[2] - my_orientation );
 
 				  r.theta_error[1] = r.theta_error[0];
-				  r.theta_error[0]= (absolute_heading - my_orientation );
+				  r.theta_error[0]= Uni::AngleNormalize((absolute_heading - my_orientation ));
 
 				  double proportional = r.theta_error[0];
 				  double differential = (r.theta_error[0] - r.theta_error[1])/Uni::sleep_msec;
 				  r.integral = r.integral + (r.theta_error[0]*Uni::sleep_msec);
 
-				  r.speed[1] = 0.4 * proportional + 0.002 * r.integral;
+				  r.speed[1] = 0.8 * proportional;//  + 0.0002 * r.integral;
 
 				 // if (fabs(r.theta_error[0]) < 0.003) r.speed[1] = 0.5 * proportional + 0.0000002 * r.integral;
 				 // printf("%f\n", r.theta_error[0]);
@@ -164,16 +164,17 @@ void Controller( Uni::Robot& r, void* dummy_data )
 					  	  r.time_count++;
 
 						  if (r.time_count > 5){
-							  SpaceOut(r, closer);
+							  //SpaceOut(r, closer);
 							  	  r.reward = true;
 
 							  r.time_count = 0;
 						  }
 				  }
-				  //printf("angle %g\n", absolute_heading);
-				  //printf("pose %g\n", my_orientation);
+				  printf("angle\t\t%g\n", absolute_heading);
+				  printf("pose\t\t%g\n", my_orientation);
+				  printf("angle - pose\t%g\n", r.theta_error[0]);
 
-				  if(relative_heading > 0.017 || r.theta_error[0] > 0.0017){
+				  if(relative_heading > 0.017 || fabs(r.theta_error[0]) > 0.00017){
 					  r.time_count = 0;
 					  r.reward = false;
 				  }
@@ -208,10 +209,7 @@ void Controller( Uni::Robot& r, void* dummy_data )
 				  double relative_heading= fabs( other->pose[2] - my_orientation );
 				  double theta_error = (absolute_heading - my_orientation );
 
-				  if(theta_error < 0.034)
-					  r.speed[1] = 0.5 * theta_error;
-				  else
-					  r.speed[1] = 0.2 * theta_error;
+				  r.speed[1] = 0.8 * theta_error;
 
 				  if( relative_heading < 0.017 && r.reward == false) {
 					  r.time_count++;
@@ -253,7 +251,7 @@ int main( int argc, char* argv[] )
   FOR_EACH( r, Uni::population )
     {
 	  count++;
-      if(count < 10)
+      if(count < 20)
     	  Uni::RandomPose( r->pose );
       else{
     	  Uni::HighwayPose( r->pose, masterpose, r->color );

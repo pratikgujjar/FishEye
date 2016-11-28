@@ -135,7 +135,7 @@ namespace Uni
       pose[0] = masterpose[0] = masterpose[0] - 0.04;
 
       if(colour[0] == 255)
-    	  pose[1] = masterpose[1] - 0.24;
+    	  pose[1] = masterpose[1] - 0.08;
       else
     	  pose[1] = masterpose[1];
       pose[2] = masterpose[2];
