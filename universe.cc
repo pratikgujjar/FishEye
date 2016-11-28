@@ -14,6 +14,8 @@ using namespace Uni;
 
 const char* PROGNAME = "universe";
 
+#define POPULATION_SIZE 20
+
 #if GRAPHICS
 #include <GL/glut.h> // OS X users need <glut/glut.h> instead
 #endif
@@ -22,7 +24,7 @@ namespace Uni {
   
   bool need_redraw( true );
   double worldsize(1.0);
-  std::vector<Robot> population( 4 );
+  std::vector<Robot> population( POPULATION_SIZE );
   uint64_t updates(0);
   uint64_t updates_max( 0.0 ); 
   bool paused( false );
@@ -36,7 +38,7 @@ namespace Uni {
 
   // Robot static members
   unsigned int Robot::pixel_count( 8);
-  double Robot::range( 0.1 );
+  double Robot::range( 0.2 );
   double Robot::fov(  dtor(270.0) );
 }
 
@@ -104,8 +106,8 @@ static void mouse_func(int button, int state, int x, int y)
 #endif // GRAPHICS
 
 
-Robot::Robot() : pose(), speed(), color(), reward(), memory(), preferences(),
-		pixels( pixel_count ), callback(NULL), callback_data(NULL)
+Robot::Robot() : pose(), speed(), color(), reward(), time_count(), theta_error(), integral(), dist_error(),
+		dist_integral(), preferences(), pixels( pixel_count ), callback(NULL), callback_data(NULL)
 {
   // until C++ supports array literals in the initialization list, we're forced to do this
   static int colour_differentiator = 0;
@@ -113,7 +115,11 @@ Robot::Robot() : pose(), speed(), color(), reward(), memory(), preferences(),
   memset( pose, 0, sizeof(pose));
   memset( speed, 0, sizeof(speed));
   reward = false;
-  memory = 0;
+  time_count = 0;
+  memset( theta_error, 0, sizeof(theta_error));
+  integral = 0;
+  memset( dist_error, 0, sizeof(dist_error));
+  dist_integral = 0;
 
   if(colour_differentiator % 2 == 0){
 	  //Make Robots blue and prefer blue
@@ -122,8 +128,8 @@ Robot::Robot() : pose(), speed(), color(), reward(), memory(), preferences(),
 	  color[2] = 255;
 
 	  preferences[0] = 0.6;
-	  preferences[1] = 0.001;
-	  preferences[2] = 0.399;
+	  preferences[1] = 0.00001;
+	  preferences[2] = 0.39999;
 
   }
   else{
@@ -133,8 +139,8 @@ Robot::Robot() : pose(), speed(), color(), reward(), memory(), preferences(),
 	  color[2] = 0;
 
 	  preferences[0] = 0.6;
-	  preferences[1] = 0.399;
-	  preferences[2] = 0.001;
+	  preferences[1] = 0.39999;
+	  preferences[2] = 0.00001;
   }
 }
 
@@ -149,7 +155,7 @@ void Uni::Init( int argc, char** argv )
 
   bool quiet = false; // controls output verbosity
 
-  int population_size = 4;
+  int population_size = POPULATION_SIZE;
   // parse arguments to configure Robot static members
   // opterr = 0; // supress errors about bad options
   int c;  
@@ -278,43 +284,43 @@ void Uni::Init( int argc, char** argv )
 }
 
 // To have 5 red rewarded robots and 5 blue rewarded robots
-void Reward_Robot(Uni::Robot *r, int pixel){
-	static bool wasExecuted = false;
-	static bool redDone = false;
-	static bool blueDone = false;
-	static int redCount = 0;  // Need 5 rewarded reds
-	static int blueCount = 0; // Need 5 rewarded blues
-	if(!wasExecuted){
-		if(!redDone){
-			if(r->color[0] == 255){
-				if(r->pixels[pixel].robot->color[0] == 255)
-					r->memory++;
-
-				if(r->memory > reward_threshold && r->reward == false){
-					r->reward = true;
-					redCount++;
-					if(redCount >= 5)
-						redDone = true;
-				}
-			}
-		}
-		if(!blueDone){
-			if(r->color[2] == 255){
-				if(r->pixels[pixel].robot->color[2] == 255)
-					r->memory++;
-
-				if(r->memory > reward_threshold && r->reward == false){
-					r->reward = true;
-					blueCount++;
-					if(blueCount >= 5)
-						blueDone = true;
-				}
-			}
-		}
-		if(redDone && blueDone)
-			wasExecuted = true;
-	}
-}
+// void Reward_Robot(Uni::Robot *r, int pixel){
+//	static bool wasExecuted = false;
+//	static bool redDone = false;
+//	static bool blueDone = false;
+//	static int redCount = 0;  // Need 5 rewarded reds
+//	static int blueCount = 0; // Need 5 rewarded blues
+//	if(!wasExecuted){
+//		if(!redDone){
+//			if(r->color[0] == 255){
+//				if(r->pixels[pixel].robot->color[0] == 255)
+//					r->memory++;
+//
+//				if(r->memory > reward_threshold && r->reward == false){
+//					r->reward = true;
+//					redCount++;
+//					if(redCount >= 5)
+//						redDone = true;
+//				}
+//			}
+//		}
+//		if(!blueDone){
+//			if(r->color[2] == 255){
+//				if(r->pixels[pixel].robot->color[2] == 255)
+//					r->memory++;
+//
+//				if(r->memory > reward_threshold && r->reward == false){
+//					r->reward = true;
+//					blueCount++;
+//					if(blueCount >= 5)
+//						blueDone = true;
+//				}
+//			}
+//		}
+//		if(redDone && blueDone)
+//			wasExecuted = true;
+//	}
+//}
 
 void Robot::UpdateSensor()
 {
