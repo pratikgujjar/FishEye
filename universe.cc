@@ -14,7 +14,7 @@ using namespace Uni;
 
 const char* PROGNAME = "universe";
 
-#define POPULATION_SIZE 30
+#define POPULATION_SIZE 20
 
 #if GRAPHICS
 #include <GL/glut.h> // OS X users need <glut/glut.h> instead
@@ -37,7 +37,7 @@ namespace Uni {
   double lastseconds; 
 
   // Robot static members
-  unsigned int Robot::pixel_count( 100);
+  unsigned int Robot::pixel_count(40);
   double Robot::range( 0.2 );
   double Robot::fov(  dtor(270.0) );
 }
@@ -107,7 +107,7 @@ static void mouse_func(int button, int state, int x, int y)
 
 
 Robot::Robot() : pose(), speed(), color(), reward(), time_count(), theta_error(), integral(), dist_error(),
-		dist_integral(), preferences(), pixels( pixel_count ), callback(NULL), callback_data(NULL)
+		dist_integral(),  robot_number(), preferences(), pixels( pixel_count ), callback(NULL), callback_data(NULL)
 {
   // until C++ supports array literals in the initialization list, we're forced to do this
   static int colour_differentiator = 0;

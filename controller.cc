@@ -11,7 +11,7 @@
 
 static bool invert = true;
 
-int Decide(int red_robots, int blue_robots, Uni::Robot r)
+int Decide(int red_robots, int blue_robots, Uni::Robot& r)
 {
 	float red_self_preference = r.preferences[0]/r.preferences[1];
 	float blue_self_preference = r.preferences[0]/r.preferences[2];
@@ -22,10 +22,10 @@ int Decide(int red_robots, int blue_robots, Uni::Robot r)
 	return 0;
 }
 
-void SpaceOut(Uni::Robot& r, Uni::Robot* closer)
+void SpaceOut(Uni::Robot& r, Uni::Robot* other)
 {
 	double halfworld = Uni::worldsize * 0.5;
-	double dx = closer->pose[0] - r.pose[0];
+	double dx = other->pose[0] - r.pose[0];
 
 	// wrap around torus
 	if( dx > halfworld )
@@ -33,7 +33,7 @@ void SpaceOut(Uni::Robot& r, Uni::Robot* closer)
 	else if( dx < -halfworld )
 		dx += Uni::worldsize;
 
-	double dy = closer->pose[1] - r.pose[1];
+	double dy = other->pose[1] - r.pose[1];
 
 	// wrap around torus
 	if( dy > halfworld )
@@ -46,35 +46,87 @@ void SpaceOut(Uni::Robot& r, Uni::Robot* closer)
 
 	double proportional = r.dist_error[0] - 0.08;
 	r.dist_integral = r.dist_integral + (proportional*Uni::sleep_msec);
-	printf("Distance = %f\n", r.dist_error[0]);
-	printf("Distance error %f\n", r.dist_error[0] -0.08);
-	r.speed[0] = r.speed[0] + 0.004 * proportional + 0.0000004 * r.dist_integral;
+	r.speed[0] = r.speed[0] + 0.004 * proportional;// + 0.0000004 * r.dist_integral;
+
+	printf("Speed for robot %d is %f\n", r.robot_number, r.speed[0] );
+
+	if(fabs(r.dist_error[0] - 0.08) < 0.004) r.speed[0] = 0.005;
 	if(r.speed[0] > 0.006) r.speed[0] = 0.006;
+	if(r.speed[0] < 0.004) r.speed[0] = 0.004;
+
+	return;
+}
+
+void FollowRobot(Uni::Robot& r, Uni::Robot* other){
+	  double halfworld = Uni::worldsize * 0.5;
+	  double dx = other->pose[0] - r.pose[0];
+
+	  // wrap around torus
+	  if( dx > halfworld )
+		  dx -= Uni::worldsize;
+	  else if( dx < -halfworld )
+		  dx += Uni::worldsize;
+
+	  double dy = other->pose[1] - r.pose[1];
+
+	  // wrap around torus
+	  if( dy > halfworld )
+		  dy -= Uni::worldsize;
+	  else if( dy < -halfworld )
+		  dy += Uni::worldsize;
+
+	  double absolute_heading = atan2( dy, dx );
+	  double my_orientation = r.pose[2];
+	  double relative_heading = fabs( other->pose[2] - my_orientation );
+
+	  r.theta_error[1] = r.theta_error[0];
+	  r.theta_error[0]= Uni::AngleNormalize((absolute_heading - my_orientation ));
+
+	  double proportional = r.theta_error[0];
+	  //double differential = (r.theta_error[0] - r.theta_error[1])/Uni::sleep_msec;
+	  r.integral = r.integral + (r.theta_error[0]*Uni::sleep_msec);
+
+	  r.speed[1] = 0.3 * proportional  + 0.0002 * r.integral;
+
+	  if( relative_heading < 0.017) {
+			  r.time_count++;
+			  if (r.time_count > 5){
+
+				  r.reward = true;
+
+				  r.time_count = 0;
+			  }
+	  }
+
+	  if(relative_heading > 0.017 || fabs(r.theta_error[0]) > 0.00017){
+		  r.time_count = 0;
+		  r.reward = false;
+	  }
 }
 
 // Examine the robot's pixels vector and set the speed sensibly.
 void Controller( Uni::Robot& r, void* dummy_data )
 { 
   // steer away from the closest robot
-  int closest = -1;
+  int closest_rewarded = -1;
   int closest_red = -1;
   int closest_blue = -1;
   int closest_red_rewarded = -1;
+  int closest_blue_rewarded = -1;
   double dist = r.range; // max sensor range
   int red_robots_inrange = 0;
   int blue_robots_inrange = 0;
 
-  double halfworld = Uni::worldsize * 0.5;
-
   const size_t pixel_count = r.pixels.size();
 
-  for( unsigned int p=0; p<pixel_count; p++ ){
- 	  if( r.pixels[p].range < dist)
-       {
- 			  closest = (int)p;
- 			  dist = r.pixels[p].range;
-       }
-   }
+  dist = r.range;
+    for( unsigned int p=0; p<pixel_count; p++ ){
+  	  if( r.pixels[p].range < dist && r.pixels[p].robot->reward == true )
+        {
+  			  closest_rewarded = (int)p;
+  			  dist = r.pixels[p].range;
+        }
+    }
 
   dist = r.range;
   for( unsigned int p=0; p<pixel_count; p++ ){
@@ -98,6 +150,15 @@ void Controller( Uni::Robot& r, void* dummy_data )
   for (unsigned int p=0; p<pixel_count; p++){
 	  if( r.pixels[p].range < dist && r.pixels[p].robot->color[2] == 255 && r.pixels[p].robot->reward == true )
 	  {
+			  closest_blue_rewarded = (int)p;
+			  dist = r.pixels[p].range;
+	  }
+  }
+
+  dist = r.range;
+  for (unsigned int p=0; p<pixel_count; p++){
+	  if( r.pixels[p].range < dist && r.pixels[p].robot->color[2] == 255 && r.pixels[p].robot->reward == true )
+	  {
 			  closest_blue = (int)p;
 			  dist = r.pixels[p].range;
 	  }
@@ -106,122 +167,35 @@ void Controller( Uni::Robot& r, void* dummy_data )
   }
 
 
-  if( closest_red < 0 && closest_blue < 0) // nothing nearby: cruise
+  if( closest_red < 0 || closest_blue < 0) // nothing nearby: cruise
     return;
 
+//  if(closest_rewarded > -1){
+//	  if ((r.pixels[closest_rewarded].robot->color[0] != r.color[0] ||
+//			  r.pixels[closest_rewarded].robot->color[2] != r.color[2]) && r.reward == false )
+//		  FollowRobot(r, r.pixels[closest_rewarded].robot );
+//  }
+
   //A robot is nearby, decide whether to follow the closest robot
+//  if(r.reward == true){
+//	  if(r.color[0] == 255) SpaceOut(r, r.pixels[closest_red].robot);
+//	  else SpaceOut(r, r.pixels[closest_blue].robot);
+//  }
+
   int decision = Decide(red_robots_inrange, blue_robots_inrange, r);
 
   switch(decision)
   {
-  	  case 0: /*if(closest > -1){
-  		  	  	  if( closest < (int)pixel_count / 2 )
-  		  	  		  r.speed[1] = 0.04; // rotate right
-  		  	  	  else
-  		  	  		  r.speed[1] = -0.04; // rotate left
-  	  	  	  }*/
-  	  	  	  break;
+  	  case 0: break;
   	  case 1: if(closest_red_rewarded > -1){
-  		  	  	  Uni::Robot* other = &(*r.pixels[closest_red_rewarded].robot);
-  		  	  	  Uni::Robot* closer = &(*r.pixels[closest_red].robot);
-
-  		  	  	  //other->color[2] = 255;
-
-  		  	  	  double dx = other->pose[0] - r.pose[0];
-
-  		  	  	  // wrap around torus
-				  if( dx > halfworld )
-					  dx -= Uni::worldsize;
-				  else if( dx < -halfworld )
-					  dx += Uni::worldsize;
-
-				  double dy = other->pose[1] - r.pose[1];
-
-				  // wrap around torus
-				  if( dy > halfworld )
-					  dy -= Uni::worldsize;
-				  else if( dy < -halfworld )
-					  dy += Uni::worldsize;
-
-				  double absolute_heading = atan2( dy, dx );
-				  double my_orientation = r.pose[2];
-				  double relative_heading = fabs( other->pose[2] - my_orientation );
-
-				  r.theta_error[1] = r.theta_error[0];
-				  r.theta_error[0]= Uni::AngleNormalize((absolute_heading - my_orientation ));
-
-				  double proportional = r.theta_error[0];
-				  double differential = (r.theta_error[0] - r.theta_error[1])/Uni::sleep_msec;
-				  r.integral = r.integral + (r.theta_error[0]*Uni::sleep_msec);
-
-				  r.speed[1] = 0.8 * proportional;//  + 0.0002 * r.integral;
-
-				 // if (fabs(r.theta_error[0]) < 0.003) r.speed[1] = 0.5 * proportional + 0.0000002 * r.integral;
-				 // printf("%f\n", r.theta_error[0]);
-
-				  if( relative_heading < 0.017) {
-					  //if(fabs(range - 0.04) < 0.0005 ){
-					  	  r.time_count++;
-
-						  if (r.time_count > 5){
-							  //SpaceOut(r, closer);
-							  	  r.reward = true;
-
-							  r.time_count = 0;
-						  }
-				  }
-				  printf("angle\t\t%g\n", absolute_heading);
-				  printf("pose\t\t%g\n", my_orientation);
-				  printf("angle - pose\t%g\n", r.theta_error[0]);
-
-				  if(relative_heading > 0.017 || fabs(r.theta_error[0]) > 0.00017){
-					  r.time_count = 0;
-					  r.reward = false;
-				  }
-
-				  //printf("Distance = %f\n", range-0.04);
-				  //printf("Linear velocity = %f\n", r.speed[0]);
-
-				  //if(theta_error > 0.0017) r.reward = false;
+  		  	  	  Uni::Robot* other = r.pixels[closest_red_rewarded].robot;
+  		  	  	  FollowRobot(r, other);
   	  	  	  }
   	  	  	  break;
-  	  case 2: if(closest_blue > -1){
-  		  	  	  Uni::Robot* other = &(*r.pixels[closest_blue].robot);
-
-				  double dx = other->pose[0] - r.pose[0];
-
-				  // wrap around torus
-				  if( dx > halfworld )
-					  dx -= Uni::worldsize;
-				  else if( dx < -halfworld )
-					  dx += Uni::worldsize;
-
-				  double dy = other->pose[1] - r.pose[1];
-
-				  // wrap around torus
-				  if( dy > halfworld )
-					  dy -= Uni::worldsize;
-				  else if( dy < -halfworld )
-					  dy += Uni::worldsize;
-
-				  double absolute_heading = atan2( dy, dx );
-				  double my_orientation = r.pose[2];
-				  double relative_heading= fabs( other->pose[2] - my_orientation );
-				  double theta_error = (absolute_heading - my_orientation );
-
-				  r.speed[1] = 0.8 * theta_error;
-
-				  if( relative_heading < 0.017 && r.reward == false) {
-					  r.time_count++;
-					  if (r.time_count > 5){
-						  r.reward = true;
-						  r.time_count = 0;
-					  }
-				  }
-				  else{
-					  r.time_count = 0;
-				  }
-			  }
+  	  case 2: if(closest_blue_rewarded > -1){
+  		  	  	  Uni::Robot* other = r.pixels[closest_blue_rewarded].robot;
+  		  	  	  FollowRobot(r, other);
+  	  	  	  }
   	  	  	  break;
   }
 }
@@ -251,11 +225,14 @@ int main( int argc, char* argv[] )
   FOR_EACH( r, Uni::population )
     {
 	  count++;
-      if(count < 20)
+      if(count < 10){
     	  Uni::RandomPose( r->pose );
+      	  r->robot_number = count;
+      }
       else{
     	  Uni::HighwayPose( r->pose, masterpose, r->color );
     	  r->reward = true;
+    	  r->robot_number = count;
       }
 
       // install our callback function

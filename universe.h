@@ -58,6 +58,7 @@ namespace Uni
     double integral;
     double dist_error[2];
     double dist_integral;
+    int robot_number;
     // Addition to support Bayesian decisions
     float preferences[3]; // choice[0] = probability of laziness, choice[1] = probability of joining red group, choice[2] = joining blue group
 
