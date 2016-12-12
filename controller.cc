@@ -48,7 +48,7 @@ void SpaceOut(Uni::Robot& r, Uni::Robot* other)
 	r.dist_integral = r.dist_integral + (proportional*Uni::sleep_msec);
 	r.speed[0] = r.speed[0] + 0.004 * proportional;// + 0.0000004 * r.dist_integral;
 
-	printf("Speed for robot %d is %f\n", r.robot_number, r.speed[0] );
+	//printf("Speed for robot %d is %f\n", r.robot_number, r.speed[0] );
 
 	if(fabs(r.dist_error[0] - 0.08) < 0.004) r.speed[0] = 0.005;
 	if(r.speed[0] > 0.006) r.speed[0] = 0.006;
@@ -162,8 +162,8 @@ void Controller( Uni::Robot& r, void* dummy_data )
 			  closest_blue = (int)p;
 			  dist = r.pixels[p].range;
 	  }
-	  red_robots_inrange += r.pixels[p].red_robots;
-	  blue_robots_inrange += r.pixels[p].blue_robots;
+	  red_robots_inrange += r.pixels[p].other_robots[0];
+	  blue_robots_inrange += r.pixels[p].other_robots[1];
   }
 
 
@@ -176,7 +176,7 @@ void Controller( Uni::Robot& r, void* dummy_data )
 //		  FollowRobot(r, r.pixels[closest_rewarded].robot );
 //  }
 
-  //A robot is nearby, decide whether to follow the closest robot
+//  A robot is nearby, decide whether to follow the closest robot
 //  if(r.reward == true){
 //	  if(r.color[0] == 255) SpaceOut(r, r.pixels[closest_red].robot);
 //	  else SpaceOut(r, r.pixels[closest_blue].robot);
@@ -198,6 +198,18 @@ void Controller( Uni::Robot& r, void* dummy_data )
   	  	  	  }
   	  	  	  break;
   }
+}
+
+inline void HighwayPose( double pose[3], double masterpose[3], int lanechoice)
+{
+    pose[0] = masterpose[0] = masterpose[0] - 0.04;
+
+    if(lanechoice == 1)
+  	  pose[1] = masterpose[1] - 0.08;
+    else
+  	  pose[1] = masterpose[1];
+
+    pose[2] = masterpose[2];
 }
 
 int main( int argc, char* argv[] )
@@ -224,14 +236,16 @@ int main( int argc, char* argv[] )
   // configure the robots the way I want 'em
   FOR_EACH( r, Uni::population )
     {
+	  int randomized_lane = rand() % 2 + 1;
 	  count++;
-      if(count < 10){
-    	  Uni::RandomPose( r->pose );
-      	  r->robot_number = count;
-      }
-      else{
-    	  Uni::HighwayPose( r->pose, masterpose, r->color );
-    	  r->reward = true;
+
+//      if(count < 10){
+//    	  Uni::RandomPose( r->pose );
+//      	  r->robot_number = count;
+//      }
+      {
+    	  HighwayPose( r->pose, masterpose, randomized_lane );
+    	  //r->reward = true;
     	  r->robot_number = count;
       }
 

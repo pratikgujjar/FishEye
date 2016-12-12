@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include <cstdint>
 #define GRAPHICS 1
-#define PI 3.1415
 
 // handy STL iterator macro pair. Use FOR_EACH(I,C){ } to get an iterator I to
 // each item in a collection C.
@@ -58,7 +57,7 @@ namespace Uni
     double integral;
     double dist_error[2];
     double dist_integral;
-    int robot_number;
+    int robot_number;	//Self robot number for debugging
     // Addition to support Bayesian decisions
     float preferences[3]; // choice[0] = probability of laziness, choice[1] = probability of joining red group, choice[2] = joining blue group
 
@@ -67,8 +66,7 @@ namespace Uni
     public:
       double range; // between zero and Robot::range
       Robot* robot; // closest robot detected or NULL if nothing detected
-      int red_robots; // number of rewarded red robots in the pixel
-      int blue_robots;  // number of rewarded blue robots in the pixel
+      int other_robots[2]; // number of rewarded other robots in the pixel, 0=red, 1 = blue
     };
     
     std::vector<Pixel> pixels; // sensor array
@@ -131,15 +129,15 @@ namespace Uni
     pose[2] = AngleNormalize( drand48() * (M_PI*2.0));
   }
 
-  inline void HighwayPose( double pose[3], double masterpose[3], uint8_t colour[3])
-    {
-      pose[0] = masterpose[0] = masterpose[0] - 0.04;
-
-      if(colour[0] == 255)
-    	  pose[1] = masterpose[1] - 0.08;
-      else
-    	  pose[1] = masterpose[1];
-      pose[2] = masterpose[2];
-    }
+//  inline void HighwayPose( double pose[3], double masterpose[3], uint8_t colour[3])
+//    {
+//      pose[0] = masterpose[0] = masterpose[0] - 0.04;
+//
+//      if(colour[0] == 255)
+//    	  pose[1] = masterpose[1] - 0.08;
+//      else
+//    	  pose[1] = masterpose[1];
+//      pose[2] = masterpose[2];
+//    }
   
 }; // namespace Uni
