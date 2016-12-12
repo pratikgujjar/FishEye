@@ -154,7 +154,7 @@ void Controller( Uni::Robot& r, void* dummy_data )
 				  double differential = (r.theta_error[0] - r.theta_error[1])/Uni::sleep_msec;
 				  r.integral = r.integral + (r.theta_error[0]*Uni::sleep_msec);
 
-				  r.speed[1] = 0.8 * proportional;//  + 0.0002 * r.integral;
+				  r.speed[1] = 0.4 * proportional;//  + 0.0002 * r.integral;
 
 				 // if (fabs(r.theta_error[0]) < 0.003) r.speed[1] = 0.5 * proportional + 0.0000002 * r.integral;
 				 // printf("%f\n", r.theta_error[0]);
@@ -187,6 +187,7 @@ void Controller( Uni::Robot& r, void* dummy_data )
   	  	  	  break;
   	  case 2: if(closest_blue > -1){
   		  	  	  Uni::Robot* other = &(*r.pixels[closest_blue].robot);
+  		  	  	  //Uni::Robot* closer = &(*r.pixels[closest_blue].robot);
 
 				  double dx = other->pose[0] - r.pose[0];
 
@@ -207,21 +208,38 @@ void Controller( Uni::Robot& r, void* dummy_data )
 				  double absolute_heading = atan2( dy, dx );
 				  double my_orientation = r.pose[2];
 				  double relative_heading= fabs( other->pose[2] - my_orientation );
-				  double theta_error = (absolute_heading - my_orientation );
+				  r.theta_error[1] = r.theta_error[0];
+				  r.theta_error[0]= Uni::AngleNormalize((absolute_heading - my_orientation ));
 
-				  r.speed[1] = 0.8 * theta_error;
+				  double proportional = r.theta_error[0];
+				  double differential = (r.theta_error[0] - r.theta_error[1])/Uni::sleep_msec;
+				  r.integral = r.integral + (r.theta_error[0]*Uni::sleep_msec);
 
-				  if( relative_heading < 0.017 && r.reward == false) {
-					  r.time_count++;
-					  if (r.time_count > 5){
-						  r.reward = true;
-						  r.time_count = 0;
-					  }
+				  r.speed[1] = 0.4 * proportional;//  + 0.0002 * r.integral;
+
+				 // if (fabs(r.theta_error[0]) < 0.003) r.speed[1] = 0.5 * proportional + 0.0000002 * r.integral;
+				 // printf("%f\n", r.theta_error[0]);
+
+				  if( relative_heading < 0.017) {
+					  //if(fabs(range - 0.04) < 0.0005 ){
+						  r.time_count++;
+
+						  if (r.time_count > 5){
+							  //SpaceOut(r, closer);
+								  r.reward = true;
+
+							  r.time_count = 0;
+						  }
 				  }
-				  else{
+				  printf("angle\t\t%g\n", absolute_heading);
+				  printf("pose\t\t%g\n", my_orientation);
+				  printf("angle - pose\t%g\n", r.theta_error[0]);
+
+				  if(relative_heading > 0.017 || fabs(r.theta_error[0]) > 0.00017){
 					  r.time_count = 0;
+					  r.reward = false;
 				  }
-			  }
+  	  	  	  }
   	  	  	  break;
   }
 }

@@ -37,7 +37,7 @@ namespace Uni {
   double lastseconds; 
 
   // Robot static members
-  unsigned int Robot::pixel_count( 100);
+  unsigned int Robot::pixel_count( 32);
   double Robot::range( 0.2 );
   double Robot::fov(  dtor(270.0) );
 }
@@ -128,8 +128,8 @@ Robot::Robot() : pose(), speed(), color(), reward(), time_count(), theta_error()
 	  color[2] = 255;
 
 	  preferences[0] = 0.6;
-	  preferences[1] = 0.00001;
-	  preferences[2] = 0.39999;
+	  preferences[1] = 0.1;
+	  preferences[2] = 0.3;
 
   }
   else{
@@ -139,8 +139,8 @@ Robot::Robot() : pose(), speed(), color(), reward(), time_count(), theta_error()
 	  color[2] = 0;
 
 	  preferences[0] = 0.6;
-	  preferences[1] = 0.39999;
-	  preferences[2] = 0.00001;
+	  preferences[1] = 0.3;
+	  preferences[2] = 0.1;
   }
 }
 
