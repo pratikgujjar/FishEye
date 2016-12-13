@@ -108,6 +108,7 @@ void FollowRobot(Uni::Robot& r, Uni::Robot* other){
 void Controller( Uni::Robot& r, void* dummy_data )
 { 
   // steer away from the closest robot
+  int closest = -1;
   int closest_rewarded = -1;
   int closest_red = -1;
   int closest_blue = -1;
@@ -121,7 +122,16 @@ void Controller( Uni::Robot& r, void* dummy_data )
   const size_t pixel_count = r.pixels.size();
 
   dist = r.range;
-    for( unsigned int p=0; p<pixel_count; p++ ){
+
+  for( unsigned int p=0; p<pixel_count; p++ ){
+  	  if( r.pixels[p].range < dist )
+        {
+  			  closest = (int)p;
+  			  dist = r.pixels[p].range;
+        }
+    }
+
+  for( unsigned int p=0; p<pixel_count; p++ ){
   	  if( r.pixels[p].range < dist && r.pixels[p].robot->reward == true )
         {
   			  closest_rewarded = (int)p;
@@ -181,6 +191,12 @@ void Controller( Uni::Robot& r, void* dummy_data )
 //	  if(r.color[0] == 255) SpaceOut(r, r.pixels[closest_red].robot);
 //	  else SpaceOut(r, r.pixels[closest_blue].robot);
 //  }
+  if(r.speed[0] > r.pixels[closest].robot->speed[0])
+	  r.speed[0] = r.pixels[closest].robot->speed[0];
+  else if(r.color[0] == 255)
+	  r.speed[0] = 0.005;
+  else
+	  r.speed[0] = 0.006;
 
   int decision = Decide(red_robots_inrange, blue_robots_inrange, r);
   switch(decision)
@@ -194,6 +210,7 @@ void Controller( Uni::Robot& r, void* dummy_data )
   	  case 2: if(closest_blue > -1){
   		  	  	  Uni::Robot* other = r.pixels[closest_blue].robot;
   		  	  	  //FollowRobot(r, other);
+  		  	  	  printf("%d\n", r.pixels[closest].robot->robot_number);
   	  	  	  }
   	  	  	  break;
   }
@@ -250,7 +267,7 @@ int main( int argc, char* argv[] )
       // install our callback function
       r->callback = Controller;
       r->callback_data = NULL;
-      if(r->color[0]==255)
+      if(r->color[0] == 255)
     	  r->speed[0] = 0.005;   // constant forward speed
       else
     	  r->speed[0] = 0.006;
