@@ -14,7 +14,7 @@ using namespace Uni;
 
 const char* PROGNAME = "universe";
 
-#define POPULATION_SIZE 30
+#define POPULATION_SIZE 20
 
 #if GRAPHICS
 #include <GL/glut.h> // OS X users need <glut/glut.h> instead
@@ -33,13 +33,13 @@ namespace Uni {
   int rewarddisplaylist(0);
   bool show_data( true );
   unsigned int sleep_msec( 50 );
-  
-  double lastseconds; 
+
+  double lastseconds;
 
   // Robot static members
-  unsigned int Robot::pixel_count( 32);
+  unsigned int Robot::pixel_count(40);
   double Robot::range( 0.2 );
-  double Robot::fov(  dtor(270.0) );
+  double Robot::fov(  dtor(180.0) );
 }
 
 char usage[] = "Universe understands these command line arguments:\n"
@@ -107,7 +107,7 @@ static void mouse_func(int button, int state, int x, int y)
 
 
 Robot::Robot() : pose(), speed(), color(), reward(), time_count(), theta_error(), integral(), dist_error(),
-		dist_integral(), preferences(), pixels( pixel_count ), callback(NULL), callback_data(NULL)
+		dist_integral(),  robot_number(), preferences(), pixels( pixel_count ), callback(NULL), callback_data(NULL)
 {
   // until C++ supports array literals in the initialization list, we're forced to do this
   static int colour_differentiator = 0;
@@ -128,8 +128,8 @@ Robot::Robot() : pose(), speed(), color(), reward(), time_count(), theta_error()
 	  color[2] = 255;
 
 	  preferences[0] = 0.6;
-	  preferences[1] = 0.1;
-	  preferences[2] = 0.3;
+	  preferences[1] = 0.00001;
+	  preferences[2] = 0.39999;
 
   }
   else{
@@ -139,8 +139,8 @@ Robot::Robot() : pose(), speed(), color(), reward(), time_count(), theta_error()
 	  color[2] = 0;
 
 	  preferences[0] = 0.6;
-	  preferences[1] = 0.3;
-	  preferences[2] = 0.1;
+	  preferences[1] = 0.39999;
+	  preferences[2] = 0.00001;
   }
 }
 
@@ -333,8 +333,8 @@ void Robot::UpdateSensor()
     {
       it->range = Robot::range; // maximum range
       it->robot = NULL; // nothing detected
-      it->red_robots = 0;
-      it->blue_robots = 0;
+      it->other_robots[0] = 0;
+      it->other_robots[1] = 0;
     }
 
   // check every robot in the world to see if it is detected
@@ -397,10 +397,10 @@ void Robot::UpdateSensor()
       pixels[pixel].range = range;
       pixels[pixel].robot = other;
 
-      if(pixels[pixel].robot->color[0] == 255 && pixels[pixel].robot->reward == true)
-    	  pixels[pixel].red_robots++;
-      else if(pixels[pixel].robot->color[2] == 255 && pixels[pixel].robot->reward == true)
-    	  pixels[pixel].blue_robots++;
+      if(pixels[pixel].robot->color[0] == 255)
+    	  pixels[pixel].other_robots[0]++;
+      else if(pixels[pixel].robot->color[2] == 255)
+    	  pixels[pixel].other_robots[1]++;
 
       //Reward_Robot(this, pixel);
     }
@@ -520,4 +520,3 @@ void Uni::Run()
     		  r->Update();
 #endif
 }
-
