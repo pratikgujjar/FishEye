@@ -193,7 +193,7 @@ void Controller( Uni::Robot& r, void* dummy_data )
   	  	  	  break;
   	  case 2: if(closest_blue > -1){
   		  	  	  Uni::Robot* other = r.pixels[closest_blue].robot;
-  		  	  	  //FollowRobot(r, other);
+  		  	  	  FollowRobot(r, other);
   	  	  	  }
   	  	  	  break;
   }
@@ -253,7 +253,7 @@ int main( int argc, char* argv[] )
       if(r->color[0]==255)
     	  r->speed[0] = 0.005;   // constant forward speed
       else
-    	  r->speed[0] = 0.006;
+    	  r->speed[0] = 0.005;
       r->speed[1] = 0.0;     // no turning. we may change this below
     }
   
