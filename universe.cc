@@ -37,9 +37,9 @@ namespace Uni {
   double lastseconds;
 
   // Robot static members
-  unsigned int Robot::pixel_count(100);
+  unsigned int Robot::pixel_count(1000);
   double Robot::range( 0.2 );
-  double Robot::fov(  dtor(180.0) );
+  double Robot::fov(  dtor(360.0) );
 }
 
 char usage[] = "Universe understands these command line arguments:\n"
@@ -486,21 +486,22 @@ void Robot::Draw() const
   if( show_data )
     {
       // render the sensors
-      double rads_per_pixel = fov / (double)pixel_count;
+      double rads_per_pixel = fov / (double)(pixel_count);
       glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 
-      for( unsigned int p=0; p<pixel_count; p++ )
+      for( unsigned int p=0; p<=(pixel_count); p++ )
 	{
-	  double angle = -fov/2.0 + (p+0.5) * rads_per_pixel;
-	  double dx1 = pixels[p].range * cos(angle+rads_per_pixel/2.0);
-	  double dy1 = pixels[p].range * sin(angle+rads_per_pixel/2.0);
-	  double dx2 = pixels[p].range * cos(angle-rads_per_pixel/2.0);
-	  double dy2 = pixels[p].range * sin(angle-rads_per_pixel/2.0);
+    	  unsigned int q = p;
+	  double angle = -fov/2.0 + (q+0.5) * rads_per_pixel;
+	  double dx1 = pixels[q].range * cos(angle+rads_per_pixel/2.0);
+	  double dy1 = pixels[q].range * sin(angle+rads_per_pixel/2.0);
+	  double dx2 = pixels[q].range * cos(angle-rads_per_pixel/2.0);
+	  double dy2 = pixels[q].range * sin(angle-rads_per_pixel/2.0);
 
 	  if (color[0]==255)
-		  glColor4f( 1,0,0, pixels[p].robot ? 0.2 : 0.05 );
+		  glColor4f( 1,0,0, pixels[q].robot ? 0.2 : 0.05 );
 	  else
-		  glColor4f( 0,0,1, pixels[p].robot ? 0.2 : 0.05 );
+		  glColor4f( 0,0,1, pixels[q].robot ? 0.2 : 0.05 );
 
 	  glBegin( GL_POLYGON );
 	  glVertex2f( 0,0 );

@@ -86,7 +86,7 @@ void FollowRobot(Uni::Robot& r, Uni::Robot* other){
 	  //double differential = (r.theta_error[0] - r.theta_error[1])/Uni::sleep_msec;
 	  r.integral = r.integral + (r.theta_error[0]*Uni::sleep_msec);
 
-	  r.speed[1] = 0.3 * proportional  + 0.0002 * r.integral;
+	  r.speed[1] = 0.4 * proportional  + 0.0002 * r.integral;
 
 	  if( relative_heading < 0.017) {
 			  r.time_count++;
@@ -102,38 +102,6 @@ void FollowRobot(Uni::Robot& r, Uni::Robot* other){
 		  r.time_count = 0;
 		  r.reward = false;
 	  }
-}
-
-
-void FollowPoint(Uni::Robot& r, double x, double y){
-	  double halfworld = Uni::worldsize * 0.5;
-	  double dx = x - r.pose[0];
-
-	  // wrap around torus
-	  if( dx > halfworld )
-		  dx -= Uni::worldsize;
-	  else if( dx < -halfworld )
-		  dx += Uni::worldsize;
-
-	  double dy = y - r.pose[1];
-
-	  // wrap around torus
-	  if( dy > halfworld )
-		  dy -= Uni::worldsize;
-	  else if( dy < -halfworld )
-		  dy += Uni::worldsize;
-
-	  double absolute_heading = atan2( dy, dx );
-	  double my_orientation = r.pose[2];
-
-	  r.theta_error[1] = r.theta_error[0];
-	  r.theta_error[0]= Uni::AngleNormalize((absolute_heading - my_orientation ));
-
-	  double proportional = r.theta_error[0];
-	  //double differential = (r.theta_error[0] - r.theta_error[1])/Uni::sleep_msec;
-	  r.integral = r.integral + (r.theta_error[0]*Uni::sleep_msec);
-
-	  r.speed[1] = 0.3 * proportional  + 0.0002 * r.integral;
 }
 
 // Examine the robot's pixels vector and set the speed sensibly.
@@ -155,63 +123,74 @@ void Controller( Uni::Robot& r, void* dummy_data )
 
   dist = r.range;
 
-  for( unsigned int p=0; p<pixel_count; p++ ){
-  	  if( r.pixels[p].range < dist )
+  for( unsigned int p=436; p<=563; p++ ){
+	  unsigned int q = p;
+	  //printf("%d\n", q);
+  	  if( r.pixels[q].range < dist )
         {
-  			  closest = (int)p;
-  			  dist = r.pixels[p].range;
+  			  closest = (int)q;
+  			  dist = r.pixels[q].range;
         }
     }
 
-  for( unsigned int p=0; p<pixel_count; p++ ){
-  	  if( r.pixels[p].range < dist && r.pixels[p].robot->reward == true )
+  for( unsigned int p=250; p<=3*(pixel_count/4); p++ ){
+	  unsigned int q = p;
+  	  if( r.pixels[q].range < dist && r.pixels[q].robot->reward == true )
         {
-  			  closest_rewarded = (int)p;
-  			  dist = r.pixels[p].range;
+  			  closest_rewarded = (int)q;
+  			  dist = r.pixels[q].range;
         }
     }
 
   dist = r.range;
-  for( unsigned int p=0; p<pixel_count; p++ ){
-	  if( r.pixels[p].range < dist && r.pixels[p].robot->color[0] == 255 && r.pixels[p].robot->reward == true )
+  for( unsigned int p=250; p<=3*(pixel_count/4); p++ ){
+	  unsigned int q = p;
+	  if( r.pixels[q].range < dist && r.pixels[q].robot->color[0] == 255 && r.pixels[q].robot->reward == true )
       {
-			  closest_red_rewarded = (int)p;
-			  dist = r.pixels[p].range;
+			  closest_red_rewarded = (int)q;
+			  dist = r.pixels[q].range;
       }
   }
 
   dist = r.range;
-   for( unsigned int p=0; p<pixel_count; p++ ){
- 	  if( r.pixels[p].range < dist && r.pixels[p].robot->color[0] == 255)
+   for( unsigned int p=250; p<=3*(pixel_count/4); p++ ){
+	  unsigned int q = p;
+ 	  if( r.pixels[q].range < dist && r.pixels[q].robot->color[0] == 255)
        {
- 			  closest_red = (int)p;
- 			  dist = r.pixels[p].range;
+ 			  closest_red = (int)q;
+ 			  dist = r.pixels[q].range;
        }
    }
 
   dist = r.range;
-  for (unsigned int p=0; p<pixel_count; p++){
-	  if( r.pixels[p].range < dist && r.pixels[p].robot->color[2] == 255 && r.pixels[p].robot->reward == true )
+  for (unsigned int p=250; p<=3*(pixel_count/4); p++){
+	  unsigned int q = p;
+	  if( r.pixels[q].range < dist && r.pixels[q].robot->color[2] == 255 && r.pixels[q].robot->reward == true )
 	  {
-			  closest_blue_rewarded = (int)p;
-			  dist = r.pixels[p].range;
+			  closest_blue_rewarded = (int)q;
+			  dist = r.pixels[q].range;
 	  }
   }
 
   dist = r.range;
-  for (unsigned int p=0; p<pixel_count; p++){
-	  if( r.pixels[p].range < dist && r.pixels[p].robot->color[2] == 255)
+  for (unsigned int p=250; p<=3*(pixel_count/4); p++){
+	  unsigned int q = p;
+	  if( r.pixels[q].range < dist && r.pixels[q].robot->color[2] == 255)
 	  {
-			  closest_blue = (int)p;
-			  dist = r.pixels[p].range;
+			  closest_blue = (int)q;
+			  dist = r.pixels[q].range;
 	  }
+  }
+
+  for (unsigned int p=0; p<pixel_count; p++){
 	  red_robots_inrange += r.pixels[p].other_robots[0];
 	  blue_robots_inrange += r.pixels[p].other_robots[1];
   }
 
-  if( closest_red < 0 || closest_blue < 0) // nothing nearby: cruise
+  if( closest_red < 0 || closest_blue < 0){ // nothing nearby: cruise
+	r.speed[0] = r.speed_max;
     return;
-
+  }
 //  if(closest_rewarded > -1){
 //	  if ((r.pixels[closest_rewarded].robot->color[0] != r.color[0] ||
 //			  r.pixels[closest_rewarded].robot->color[2] != r.color[2]) && r.reward == false )
@@ -223,14 +202,17 @@ void Controller( Uni::Robot& r, void* dummy_data )
 //	  if(r.color[0] == 255) SpaceOut(r, r.pixels[closest_red].robot);
 //	  else SpaceOut(r, r.pixels[closest_blue].robot);
 //  }
-  if(r.speed[0] >= r.pixels[closest].robot->speed[0])
-	  r.speed[0] = r.pixels[closest].robot->speed[0];
-  else if(r.color[0] == 255)
-	  r.speed[0] = 0.005;
-  else
-	  r.speed[0] = 0.006;
 
-  r.speed[1] = 0;
+  if(closest > 0){
+  	  if(r.speed_max > r.pixels[closest].robot->speed_max)
+		  r.speed[0] = r.pixels[closest].robot->speed[0];
+  	  else
+  		  r.speed[0] = r.speed_max;
+  }
+  else	r.speed[0] = r.speed_max;
+
+  if(r.robot_number %2 == 0)
+	  printf("Speed for robot %d is %f\n", r.robot_number, r.speed[0]);
 
   int decision = Decide(red_robots_inrange, blue_robots_inrange, r);
   switch(decision)
@@ -244,7 +226,6 @@ void Controller( Uni::Robot& r, void* dummy_data )
   	  case 2: if(closest_blue > -1){
   		  	  	  Uni::Robot* other = r.pixels[closest_blue].robot;
   		  	  	  FollowRobot(r, other);
-  		  	  	  //printf("%d\n", r.pixels[closest].robot->robot_number);
   	  	  	  }
   	  	  	  break;
   }
