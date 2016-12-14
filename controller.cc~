@@ -187,12 +187,9 @@ void Controller( Uni::Robot& r, void* dummy_data )
 	  blue_robots_inrange += r.pixels[p].other_robots[1];
   }
 
-  if(closest < 0){
- 	  r.speed[0] = r.speed_max;
-   }
-   if( closest_red < 0 && closest_blue < 0){ // nothing nearby: cruise
- 	  return;
-   }
+  if( closest_red < 0 || closest_blue < 0){ // nothing nearby: cruise
+    return;
+  }
 //  if(closest_rewarded > -1){
 //	  if ((r.pixels[closest_rewarded].robot->color[0] != r.color[0] ||
 //			  r.pixels[closest_rewarded].robot->color[2] != r.color[2]) && r.reward == false )
@@ -206,12 +203,12 @@ void Controller( Uni::Robot& r, void* dummy_data )
 //  }
 
   if(closest > 0){
-  	  if(r.speed_max > r.pixels[closest].robot->speed[0]){
+  	  if(r.speed_max > r.pixels[closest].robot->speed_max)
 		  r.speed[0] = r.pixels[closest].robot->speed[0];
-  	  }
   	  else
   		  r.speed[0] = r.speed_max;
   }
+  else	r.speed[0] = r.speed_max;
 
   int decision = Decide(red_robots_inrange, blue_robots_inrange, r);
   switch(decision)

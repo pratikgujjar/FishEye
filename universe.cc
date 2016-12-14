@@ -14,7 +14,7 @@ using namespace Uni;
 
 const char* PROGNAME = "universe";
 
-#define POPULATION_SIZE 20
+#define POPULATION_SIZE 18
 
 #if GRAPHICS
 #include <GL/glut.h> // OS X users need <glut/glut.h> instead
