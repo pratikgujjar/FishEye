@@ -37,7 +37,7 @@ namespace Uni {
   double lastseconds;
 
   // Robot static members
-  unsigned int Robot::pixel_count(40);
+  unsigned int Robot::pixel_count(100);
   double Robot::range( 0.2 );
   double Robot::fov(  dtor(180.0) );
 }
@@ -107,7 +107,7 @@ static void mouse_func(int button, int state, int x, int y)
 
 
 Robot::Robot() : pose(), speed(), color(), reward(), time_count(), theta_error(), integral(), dist_error(),
-		dist_integral(),  robot_number(), preferences(), pixels( pixel_count ), callback(NULL), callback_data(NULL)
+		dist_integral(),  robot_number(), lane_change_flag(), speed_max(), preferences(), pixels( pixel_count ), callback(NULL), callback_data(NULL)
 {
   // until C++ supports array literals in the initialization list, we're forced to do this
   static int colour_differentiator = 0;
@@ -115,6 +115,7 @@ Robot::Robot() : pose(), speed(), color(), reward(), time_count(), theta_error()
   memset( pose, 0, sizeof(pose));
   memset( speed, 0, sizeof(speed));
   reward = false;
+  lane_change_flag = false;
   time_count = 0;
   memset( theta_error, 0, sizeof(theta_error));
   integral = 0;
@@ -131,6 +132,8 @@ Robot::Robot() : pose(), speed(), color(), reward(), time_count(), theta_error()
 	  preferences[1] = 0.00001;
 	  preferences[2] = 0.39999;
 
+	  speed_max = 0.006;
+
   }
   else{
 	  // Make robots red and prefer red
@@ -141,6 +144,8 @@ Robot::Robot() : pose(), speed(), color(), reward(), time_count(), theta_error()
 	  preferences[0] = 0.6;
 	  preferences[1] = 0.39999;
 	  preferences[2] = 0.00001;
+
+	  speed_max = 0.005;
   }
 }
 
@@ -190,7 +195,7 @@ void Uni::Init( int argc, char** argv )
 				
       case 'u':
 	updates_max = atol( optarg );
-	if( ! quiet ) fprintf( stderr, "[Uni] updates_max: %lu\n", (long unsigned)updates_max );
+	if( ! quiet ) fprintf( stderr, "[Uni] updates_max:   		  	  	  //FollowRobot(r, other);%lu\n", (long unsigned)updates_max );
 	break;
 				
       case 'z':

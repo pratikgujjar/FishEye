@@ -58,6 +58,8 @@ namespace Uni
     double dist_error[2];
     double dist_integral;
     int robot_number;	//Self robot number for debugging
+    bool lane_change_flag;
+    double speed_max;
     // Addition to support Bayesian decisions
     float preferences[3]; // choice[0] = probability of laziness, choice[1] = probability of joining red group, choice[2] = joining blue group
 
