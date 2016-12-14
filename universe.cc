@@ -14,7 +14,7 @@ using namespace Uni;
 
 const char* PROGNAME = "universe";
 
-#define POPULATION_SIZE 20
+#define POPULATION_SIZE 18
 
 #if GRAPHICS
 #include <GL/glut.h> // OS X users need <glut/glut.h> instead
@@ -107,7 +107,7 @@ static void mouse_func(int button, int state, int x, int y)
 
 
 Robot::Robot() : pose(), speed(), color(), reward(), time_count(), theta_error(), integral(), dist_error(),
-		dist_integral(),  robot_number(), lane_change_flag(), speed_max(), preferences(), pixels( pixel_count ), callback(NULL), callback_data(NULL)
+		dist_integral(),  robot_number(), speed_max(), preferences(), pixels( pixel_count ), callback(NULL), callback_data(NULL)
 {
   // until C++ supports array literals in the initialization list, we're forced to do this
   static int colour_differentiator = 0;
@@ -115,37 +115,52 @@ Robot::Robot() : pose(), speed(), color(), reward(), time_count(), theta_error()
   memset( pose, 0, sizeof(pose));
   memset( speed, 0, sizeof(speed));
   reward = false;
-  lane_change_flag = false;
   time_count = 0;
   memset( theta_error, 0, sizeof(theta_error));
   integral = 0;
   memset( dist_error, 0, sizeof(dist_error));
   dist_integral = 0;
 
-  if(colour_differentiator % 2 == 0){
-	  //Make Robots blue and prefer blue
-	  color[0] = 0;
-	  color[1] = 0;
-	  color[2] = 255;
+  switch(colour_differentiator % 3){
 
-	  preferences[0] = 0.6;
-	  preferences[1] = 0.00001;
-	  preferences[2] = 0.39999;
+  case 0 ://Make Robots blue and prefer blue
+		  color[0] = 0;
+		  color[1] = 0;
+		  color[2] = 255;
 
-	  speed_max = 0.006;
+		  preferences[0] = 0.6;
+		  preferences[1] = 0.00001;
+		  preferences[2] = 0.00001;
+		  preferences[3] = 0.39999;
 
-  }
-  else{
-	  // Make robots red and prefer red
-	  color[0] = 255;
-	  color[1] = 0;
-	  color[2] = 0;
+		  speed_max = 0.006;
+		  break;
 
-	  preferences[0] = 0.6;
-	  preferences[1] = 0.39999;
-	  preferences[2] = 0.00001;
+  case 1://Make Robots green and prefer green
+		  color[0] = 0;
+		  color[1] = 180;
+		  color[2] = 0;
 
-	  speed_max = 0.005;
+		  preferences[0] = 0.6;
+		  preferences[1] = 0.00001;
+		  preferences[2] = 0.39999;
+		  preferences[3] = 0.00001;
+
+		  speed_max = 0.004;
+		  break;
+
+  case 2:// Make robots red and prefer red
+		  color[0] = 255;
+		  color[1] = 0;
+		  color[2] = 0;
+
+		  preferences[0] = 0.6;
+		  preferences[1] = 0.39999;
+		  preferences[2] = 0.00001;
+		  preferences[3] = 0.00001;
+
+		  speed_max = 0.005;
+		  break;
   }
 }
 
@@ -288,45 +303,6 @@ void Uni::Init( int argc, char** argv )
   lastseconds =  start.tv_sec + start.tv_usec/1e6;
 }
 
-// To have 5 red rewarded robots and 5 blue rewarded robots
-// void Reward_Robot(Uni::Robot *r, int pixel){
-//	static bool wasExecuted = false;
-//	static bool redDone = false;
-//	static bool blueDone = false;
-//	static int redCount = 0;  // Need 5 rewarded reds
-//	static int blueCount = 0; // Need 5 rewarded blues
-//	if(!wasExecuted){
-//		if(!redDone){
-//			if(r->color[0] == 255){
-//				if(r->pixels[pixel].robot->color[0] == 255)
-//					r->memory++;
-//
-//				if(r->memory > reward_threshold && r->reward == false){
-//					r->reward = true;
-//					redCount++;
-//					if(redCount >= 5)
-//						redDone = true;
-//				}
-//			}
-//		}
-//		if(!blueDone){
-//			if(r->color[2] == 255){
-//				if(r->pixels[pixel].robot->color[2] == 255)
-//					r->memory++;
-//
-//				if(r->memory > reward_threshold && r->reward == false){
-//					r->reward = true;
-//					blueCount++;
-//					if(blueCount >= 5)
-//						blueDone = true;
-//				}
-//			}
-//		}
-//		if(redDone && blueDone)
-//			wasExecuted = true;
-//	}
-//}
-
 void Robot::UpdateSensor()
 {
   double radians_per_pixel = fov / (double)pixel_count;
@@ -340,6 +316,7 @@ void Robot::UpdateSensor()
       it->robot = NULL; // nothing detected
       it->other_robots[0] = 0;
       it->other_robots[1] = 0;
+      it->other_robots[2] = 0;
     }
 
   // check every robot in the world to see if it is detected
@@ -405,9 +382,9 @@ void Robot::UpdateSensor()
       if(pixels[pixel].robot->color[0] == 255)
     	  pixels[pixel].other_robots[0]++;
       else if(pixels[pixel].robot->color[2] == 255)
+    	  pixels[pixel].other_robots[2]++;
+      else
     	  pixels[pixel].other_robots[1]++;
-
-      //Reward_Robot(this, pixel);
     }
 }
 
@@ -498,10 +475,12 @@ void Robot::Draw() const
 	  double dx2 = pixels[q].range * cos(angle-rads_per_pixel/2.0);
 	  double dy2 = pixels[q].range * sin(angle-rads_per_pixel/2.0);
 
-	  if (color[0]==255)
+	  if (color[0] == 255)
 		  glColor4f( 1,0,0, pixels[q].robot ? 0.2 : 0.05 );
-	  else
+	  else if (color[2] == 255)
 		  glColor4f( 0,0,1, pixels[q].robot ? 0.2 : 0.05 );
+	  else
+		  glColor4f( 0,1,0, pixels[q].robot ? 0.2 : 0.05 );
 
 	  glBegin( GL_POLYGON );
 	  glVertex2f( 0,0 );
