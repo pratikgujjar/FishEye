@@ -59,9 +59,11 @@ namespace Uni
     double dist_integral;	// Integral control error accumulator for spacing out
     int robot_number;		// Self robot number for debugging
     double speed_max;		// Sets max speed for the robot
+    bool change_lane;		// To indicate if I'm changing lanes
+    double lane[2];			// 0 = x coordinate of the new lane; 1 = y coordinate of the new lane
 
     // Addition to support Bayesian decisions
-    float preferences[4]; // choice[0] = probability of laziness,
+    double preferences[4]; // choice[0] = probability of laziness,
     					  // choice[1] = probability of joining red group, choice[2] = joining green group
     					  // choice[3] = probability of joining blue group
 

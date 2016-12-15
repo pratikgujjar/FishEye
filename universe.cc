@@ -107,7 +107,7 @@ static void mouse_func(int button, int state, int x, int y)
 
 
 Robot::Robot() : pose(), speed(), color(), reward(), time_count(), theta_error(), integral(), dist_error(),
-		dist_integral(),  robot_number(), speed_max(), preferences(), pixels( pixel_count ), callback(NULL), callback_data(NULL)
+		dist_integral(), robot_number(), speed_max(), change_lane(), lane(), preferences(),  pixels( pixel_count ), callback(NULL), callback_data(NULL)
 {
   // until C++ supports array literals in the initialization list, we're forced to do this
   static int colour_differentiator = 0;
@@ -120,6 +120,8 @@ Robot::Robot() : pose(), speed(), color(), reward(), time_count(), theta_error()
   integral = 0;
   memset( dist_error, 0, sizeof(dist_error));
   dist_integral = 0;
+  change_lane = false;
+  memset( lane, 0, sizeof(dist_error));
 
   switch(colour_differentiator % 3){
 

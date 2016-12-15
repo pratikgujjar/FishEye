@@ -159,8 +159,27 @@ void Controller( Uni::Robot& r, void* dummy_data )
 
   const size_t pixel_count = r.pixels.size();
 
-  dist = r.range;
+  	if (r.change_lane == true){
+  		if(r.reward == false){
+    		  r.lane[0] = Uni::DistanceNormalize(r.lane[0] + r.speed[0]);
+    		  FollowPoint(r, r.lane[0], r.lane[1]);
+    		  return;
+    	}
+    	else
+    		  r.change_lane = false;
+    }
 
+    if(r.reward ==  true){
+  	  if(r.speed[0] != r.speed_max){
+  		  r.change_lane = true;
+  		  r.lane[0] = r.pose[0] + 0.04,
+  		  r.lane[1] = r.pose[1] - 0.05;
+  		  FollowPoint(r, r.lane[0], r.lane[1] );
+  		  return;
+  	  }
+    }
+
+  dist = r.range;
   for( unsigned int p=495; p<=505; p++ ){
 	  unsigned int q = p;
    	  if( r.pixels[q].range < dist )
@@ -261,11 +280,6 @@ void Controller( Uni::Robot& r, void* dummy_data )
   		  r.speed[0] = r.speed_max;
   }
 
-  if(r.reward ==  true){
-	  if(r.speed[0] != r.speed_max){
-
-	  }
-  }
   int decision = Decide(red_robots_inrange, green_robots_inrange, blue_robots_inrange, r);
   switch(decision)
   {
