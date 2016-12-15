@@ -10,6 +10,7 @@
 #include <iostream>
 
 static bool invert = true;
+static bool wait = true;
 
 int Decide(int red_robots, int blue_robots, Uni::Robot& r)
 {
@@ -104,16 +105,55 @@ void FollowRobot(Uni::Robot& r, Uni::Robot* other){
 	  }
 }
 
+void FollowPoint(Uni::Robot& r, double x, double y){
+	  double halfworld = Uni::worldsize * 0.5;
+	  double dx = x - r.pose[0];
+
+	  // wrap around torus
+	  if( dx > halfworld )
+		  dx -= Uni::worldsize;
+	  else if( dx < -halfworld )
+		  dx += Uni::worldsize;
+
+	  double dy = y - r.pose[1];
+
+	  // wrap around torus
+	  if( dy > halfworld )
+		  dy -= Uni::worldsize;
+	  else if( dy < -halfworld )
+		  dy += Uni::worldsize;
+
+	  double absolute_heading = atan2( dy, dx );
+	  double my_orientation = r.pose[2];
+
+	  r.theta_error[1] = r.theta_error[0];
+	  r.theta_error[0]= Uni::AngleNormalize((absolute_heading - my_orientation ));
+
+	  double proportional = r.theta_error[0];
+	  //double differential = (r.theta_error[0] - r.theta_error[1])/Uni::sleep_msec;
+	  r.integral = r.integral + (r.theta_error[0]*Uni::sleep_msec);
+
+	  r.speed[1] = 0.4 * proportional  + 0.0002 * r.integral;
+
+	  if( fabs(r.pose[2]) < 0.017) {
+			  r.time_count++;
+			  if (r.time_count > 200){
+
+				  r.reward = true;
+
+				  r.time_count = 0;
+			  }
+	  }
+}
+
 // Examine the robot's pixels vector and set the speed sensibly.
 void Controller( Uni::Robot& r, void* dummy_data )
 { 
   // steer away from the closest robot
   int closest = -1;
-  int closest_rewarded = -1;
+  //int closest_rewarded = -1;
   int closest_red = -1;
   int closest_blue = -1;
-  int closest_red_rewarded = -1;
-  int closest_blue_rewarded = -1;
 
   double dist = r.range; // max sensor range
   int red_robots_inrange = 0;
@@ -133,24 +173,14 @@ void Controller( Uni::Robot& r, void* dummy_data )
         }
     }
 
-  for( unsigned int p=250; p<=3*(pixel_count/4); p++ ){
-	  unsigned int q = p;
-  	  if( r.pixels[q].range < dist && r.pixels[q].robot->reward == true )
-        {
-  			  closest_rewarded = (int)q;
-  			  dist = r.pixels[q].range;
-        }
-    }
-
-  dist = r.range;
-  for( unsigned int p=250; p<=3*(pixel_count/4); p++ ){
-	  unsigned int q = p;
-	  if( r.pixels[q].range < dist && r.pixels[q].robot->color[0] == 255 && r.pixels[q].robot->reward == true )
-      {
-			  closest_red_rewarded = (int)q;
-			  dist = r.pixels[q].range;
-      }
-  }
+//  for( unsigned int p=250; p<=3*(pixel_count/4); p++ ){
+//	  unsigned int q = p;
+//  	  if( r.pixels[q].range < dist && r.pixels[q].robot->reward == true )
+//        {
+//  			  closest_rewarded = (int)q;
+//  			  dist = r.pixels[q].range;
+//        }
+//    }
 
   dist = r.range;
    for( unsigned int p=250; p<=3*(pixel_count/4); p++ ){
@@ -161,16 +191,6 @@ void Controller( Uni::Robot& r, void* dummy_data )
  			  dist = r.pixels[q].range;
        }
    }
-
-  dist = r.range;
-  for (unsigned int p=250; p<=3*(pixel_count/4); p++){
-	  unsigned int q = p;
-	  if( r.pixels[q].range < dist && r.pixels[q].robot->color[2] == 255 && r.pixels[q].robot->reward == true )
-	  {
-			  closest_blue_rewarded = (int)q;
-			  dist = r.pixels[q].range;
-	  }
-  }
 
   dist = r.range;
   for (unsigned int p=250; p<=3*(pixel_count/4); p++){
@@ -190,6 +210,28 @@ void Controller( Uni::Robot& r, void* dummy_data )
   if(closest < 0){
  	  r.speed[0] = r.speed_max;
    }
+
+  if (r.change_lane == true){
+ 	if(r.reward == false){
+  		  r.lane[0] = Uni::DistanceNormalize(r.lane[0] + r.speed[0]);
+   		  FollowPoint(r, r.lane[0], r.lane[1]);
+   		  printf("Follow Point\n");
+   		  return;
+ 	}
+   	else
+   		  r.change_lane = false;
+   }
+
+   if(r.reward ==  true && r.change_lane == false){
+ 	  if(r.speed[0] != r.speed_max){
+ 		  r.change_lane = true;
+ 		  r.lane[0] = r.pose[0] + 0.04,
+ 		  r.lane[1] = r.pose[1] - 0.06;
+ 		  r.reward = false;
+ 		  return;
+ 	  }
+   }
+
    if( closest_red < 0 && closest_blue < 0){ // nothing nearby: cruise
  	  return;
    }
@@ -212,6 +254,16 @@ void Controller( Uni::Robot& r, void* dummy_data )
   	  else
   		  r.speed[0] = r.speed_max;
   }
+
+//  if(wait){
+//	  r.time_count++;
+//	  if (r.time_count < 50)
+//		  return;
+//	  else{
+//		  r.time_count = 0;
+//		  wait = false;
+//	  }
+//  }
 
   int decision = Decide(red_robots_inrange, blue_robots_inrange, r);
   switch(decision)
@@ -244,6 +296,7 @@ inline void HighwayPose( double pose[3], double masterpose[3], int lanechoice)
 
 int main( int argc, char* argv[] )
 {
+	srand(3);
   // configure global robot settings
   Uni::Init( argc, argv );
   double masterpose[3];

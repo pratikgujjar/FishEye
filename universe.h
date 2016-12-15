@@ -48,20 +48,24 @@ namespace Uni
     static unsigned int  pixel_count; // number of pixels in sensor array
     
     // non-static data members
-    double pose[3] ;   // 2d pose and orientation [0]=x, [1]=y, [2]=a;
-    double speed[2];   // linear speed [0] and angular speed [1]
-    uint8_t color[3];  // body color [0]=red, [1]=green, [2]=blue
-    bool reward; 	   // Is the robot rewarded
-    int time_count;
-    double theta_error[2];
-    double integral;
-    double dist_error[2];
-    double dist_integral;
-    int robot_number;	//Self robot number for debugging
-    bool lane_change_flag;
-    double speed_max;
-    // Addition to support Bayesian decisions
-    float preferences[3]; // choice[0] = probability of laziness, choice[1] = probability of joining red group, choice[2] = joining blue group
+   double pose[3] ;   		// 2d pose and orientation [0]=x, [1]=y, [2]=a;
+   double speed[2];   		// linear speed [0] and angular speed [1]
+   uint8_t color[3];  		// body color [0]=red, [1]=green, [2]=blue
+   bool reward; 	   		// Is the robot rewarded
+   uint8_t time_count;		// Wait time before rewarding a robot
+   double theta_error[2];	// Last two theta errors for calculate differential control. 0 - latest
+   double integral;		// Integral control error accumulator
+   double dist_error[2];	// Distance errors, last two readings, for spacing out
+   double dist_integral;	// Integral control error accumulator for spacing out
+   int robot_number;		// Self robot number for debugging
+   double speed_max;		// Sets max speed for the robot
+   bool change_lane;		// To indicate if I'm changing lanes
+   double lane[2];			// 0 = x coordinate of the new lane; 1 = y coordinate of the new lane
+
+   // Addition to support Bayesian decisions
+   double preferences[4]; // choice[0] = probability of laziness,
+					  // choice[1] = probability of joining red group, choice[2] = joining green group
+					  // choice[3] = probability of joining blue group
 
     class Pixel 
     {

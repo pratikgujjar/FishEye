@@ -107,7 +107,7 @@ static void mouse_func(int button, int state, int x, int y)
 
 
 Robot::Robot() : pose(), speed(), color(), reward(), time_count(), theta_error(), integral(), dist_error(),
-		dist_integral(),  robot_number(), lane_change_flag(), speed_max(), preferences(), pixels( pixel_count ), callback(NULL), callback_data(NULL)
+		dist_integral(), robot_number(), speed_max(), change_lane(), lane(), preferences(),  pixels( pixel_count ), callback(NULL), callback_data(NULL)
 {
   // until C++ supports array literals in the initialization list, we're forced to do this
   static int colour_differentiator = 0;
@@ -115,12 +115,13 @@ Robot::Robot() : pose(), speed(), color(), reward(), time_count(), theta_error()
   memset( pose, 0, sizeof(pose));
   memset( speed, 0, sizeof(speed));
   reward = false;
-  lane_change_flag = false;
   time_count = 0;
   memset( theta_error, 0, sizeof(theta_error));
   integral = 0;
   memset( dist_error, 0, sizeof(dist_error));
   dist_integral = 0;
+  change_lane = false;
+  memset( lane, 0, sizeof(lane));
 
   if(colour_differentiator % 2 == 0){
 	  //Make Robots blue and prefer blue
@@ -195,7 +196,7 @@ void Uni::Init( int argc, char** argv )
 				
       case 'u':
 	updates_max = atol( optarg );
-	if( ! quiet ) fprintf( stderr, "[Uni] updates_max:   		  	  	  //FollowRobot(r, other);%lu\n", (long unsigned)updates_max );
+	if( ! quiet ) fprintf( stderr, "[Uni] updates_max://FollowRobot(r, other);%lu\n", (long unsigned)updates_max );
 	break;
 				
       case 'z':
@@ -326,6 +327,15 @@ void Uni::Init( int argc, char** argv )
 //			wasExecuted = true;
 //	}
 //}
+
+void displayText( float x, float y, int r, int g, int b, char *string ) {
+	int j = strlen( string );
+	glColor3f( r, g, b );
+	glRasterPos3f( x, y , 0);
+	for( int i = 0; i < j; i++ ) {
+		glutBitmapCharacter( GLUT_BITMAP_HELVETICA_18, string[i] );
+	}
+}
 
 void Robot::UpdateSensor()
 {
@@ -472,6 +482,15 @@ void Uni::UpdateAll()
 void Robot::Draw() const
 {
 #if GRAPHICS
+  double net_speed = 0.0;
+  double best_speed = 0.0;
+  FOR_EACH( robot, population ){
+	  net_speed += robot->speed[0];
+	  best_speed += robot->speed_max;
+  }
+  displayText(0.01, 0.01, 0, 0, 0, &(std::to_string(net_speed))[0]);
+  displayText(0.2, 0.01, 0, 0, 0, &(std::to_string(POPULATION_SIZE*0.005))[0]);
+  displayText(0.4, 0.01, 0, 0, 0, &(std::to_string(best_speed))[0]);
   glPushMatrix();
   glTranslatef( pose[0], pose[1], 0 );
   glRotatef( rtod(pose[2]), 0,0,1 );
