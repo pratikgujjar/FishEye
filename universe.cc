@@ -38,7 +38,7 @@ namespace Uni {
 
   // Robot static members
   unsigned int Robot::pixel_count(1000);
-  double Robot::range( 0.2 );
+  double Robot::range( 0.3 );
   double Robot::fov(  dtor(360.0) );
 }
 

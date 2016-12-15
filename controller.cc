@@ -163,7 +163,7 @@ void Controller( Uni::Robot& r, void* dummy_data )
 
   dist = r.range;
 
-  for( unsigned int p=436; p<=563; p++ ){
+  for( unsigned int p=495; p<=505; p++ ){
 	  unsigned int q = p;
 	  //printf("%d\n", q);
   	  if( r.pixels[q].range < dist )
@@ -296,7 +296,7 @@ inline void HighwayPose( double pose[3], double masterpose[3], int lanechoice)
 
 int main( int argc, char* argv[] )
 {
-	srand(3);
+	srand(4);
   // configure global robot settings
   Uni::Init( argc, argv );
   double masterpose[3];
