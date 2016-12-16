@@ -10,6 +10,7 @@
 #include <cstring>
 #include "universe.h"
 #include <iostream>
+#include <sstream>
 using namespace Uni;
 
 const char* PROGNAME = "universe";
@@ -105,6 +106,15 @@ static void mouse_func(int button, int state, int x, int y)
 
 #endif // GRAPHICS
 
+void displayText( float x, float y, int r, int g, int b, char *string ) {
+	int j = strlen( string );
+	glColor3f( r, g, b );
+	glRasterPos3f( x, y , 0);
+	for( int i = 0; i < j; i++ ) {
+		glutBitmapCharacter( GLUT_BITMAP_HELVETICA_18, string[i] );
+	}
+}
+
 
 Robot::Robot() : pose(), speed(), color(), reward(), time_count(), theta_error(), integral(), dist_error(),
 		dist_integral(), robot_number(), speed_max(), change_lane(), lane(), preferences(),  pixels( pixel_count ), callback(NULL), callback_data(NULL)
@@ -121,7 +131,7 @@ Robot::Robot() : pose(), speed(), color(), reward(), time_count(), theta_error()
   memset( dist_error, 0, sizeof(dist_error));
   dist_integral = 0;
   change_lane = false;
-  memset( lane, 0, sizeof(dist_error));
+  memset( lane, 0, sizeof(lane));
 
   switch(colour_differentiator % 3){
 
@@ -212,7 +222,7 @@ void Uni::Init( int argc, char** argv )
 				
       case 'u':
 	updates_max = atol( optarg );
-	if( ! quiet ) fprintf( stderr, "[Uni] updates_max:   		  	  	  //FollowRobot(r, other);%lu\n", (long unsigned)updates_max );
+	if( ! quiet ) fprintf( stderr, "[Uni] updates_max: //FollowRobot(r, other);%lu\n", (long unsigned)updates_max );
 	break;
 				
       case 'z':
@@ -451,12 +461,22 @@ void Uni::UpdateAll()
 void Robot::Draw() const
 {
 #if GRAPHICS
+  double net_speed = 0.0;
+  double best_speed = 0.0;
+  FOR_EACH( robot, population ){
+	  net_speed += robot->speed[0];
+	  best_speed += robot->speed_max;
+  }
+  displayText(0.01, 0.01, 0, 0, 0, &(std::to_string(net_speed))[0]);
+  displayText(0.2, 0.01, 0, 0, 0, &(std::to_string(POPULATION_SIZE*0.004))[0]);
+  displayText(0.4, 0.01, 0, 0, 0, &(std::to_string(best_speed))[0]);
+
   glPushMatrix();
   glTranslatef( pose[0], pose[1], 0 );
   glRotatef( rtod(pose[2]), 0,0,1 );
   
   glColor3ub( color[0], color[1], color[2] ); 
-  
+
   // draw the pre-compiled triangle for a body
   glCallList(displaylist);
   if (reward)
