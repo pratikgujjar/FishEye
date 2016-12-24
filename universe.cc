@@ -12,7 +12,7 @@
 #include <iostream>
 using namespace Uni;
 
-const char* PROGNAME = "universe";
+const char* PROGNAME = "Two-Lane Convoying";
 
 #define POPULATION_SIZE 18
 
@@ -433,6 +433,22 @@ void Robot::UpdatePose()
   pose[2] = AngleNormalize( pose[2] + da );
 }
 
+double bestspeed(){
+	double best_speed = 0.0;
+	  FOR_EACH( robot, population ){
+		  best_speed += robot->speed_max;
+	  }
+	return best_speed;
+}
+
+double netspeed(){
+	double net_speed = 0.0;
+	  FOR_EACH( robot, population ){
+		  net_speed += robot->speed[0];
+	  }
+	return net_speed;
+}
+
 void Uni::UpdateAll()
 {
   // if we've done enough updates, exit the program
@@ -461,7 +477,7 @@ void Uni::UpdateAll()
       need_redraw = true;
     }
   
-  const int period = 10;
+  const int period = 3;
 
   if( updates % period == 0 )
     {
@@ -469,8 +485,9 @@ void Uni::UpdateAll()
       gettimeofday( &now, NULL );
       double seconds = now.tv_sec + now.tv_usec/1e6;
       double interval = seconds - lastseconds;
-      fprintf( stderr, "[%d] FPS %.3f\r",(int)updates, period/interval );      
-      fflush(stdout);
+      //fprintf( stderr, "[%d] FPS %.3f\r",(int)updates, period/interval );
+      //printf("%d %.2f\n",(int)updates, ((netspeed()-slowestspeed)/(bestspeed()-slowestspeed))*100 );
+      //fflush(stdout);
       lastseconds = seconds;      
     }
 
@@ -482,15 +499,23 @@ void Uni::UpdateAll()
 void Robot::Draw() const
 {
 #if GRAPHICS
-  double net_speed = 0.0;
-  double best_speed = 0.0;
-  FOR_EACH( robot, population ){
-	  net_speed += robot->speed[0];
-	  best_speed += robot->speed_max;
-  }
-  displayText(0.01, 0.01, 0, 0, 0, &(std::to_string(net_speed))[0]);
-  displayText(0.2, 0.01, 0, 0, 0, &(std::to_string(POPULATION_SIZE*0.005))[0]);
-  displayText(0.4, 0.01, 0, 0, 0, &(std::to_string(best_speed))[0]);
+
+  //Display statistics on screen
+  double slowestspeed = POPULATION_SIZE*0.005;
+
+  //Display current velocity as percentage between slowest speed and fastest speed
+  displayText(0.01, 0.09, 0, 0, 0, "% of max speed");
+  float percentage = ((netspeed()-slowestspeed)/(bestspeed()-slowestspeed))*100;
+  displayText(0.35, 0.09, 0, 0, 0, &(std::to_string(percentage)[0] ));
+
+  //Display current speed
+  displayText(0.01, 0.05, 0, 0, 0, "Current Speed");
+  displayText(0.35, 0.05, 0, 0, 0, &(std::to_string(netspeed()))[0]);
+  
+  //Display max speed
+  displayText(0.01, 0.01, 0, 0, 0, "Max Speed");
+  displayText(0.35, 0.01, 0, 0, 0, &(std::to_string(bestspeed())) [0]);
+
   glPushMatrix();
   glTranslatef( pose[0], pose[1], 0 );
   glRotatef( rtod(pose[2]), 0,0,1 );

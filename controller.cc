@@ -10,7 +10,6 @@
 #include <iostream>
 
 static bool invert = true;
-static bool wait = true;
 
 int Decide(int red_robots, int blue_robots, Uni::Robot& r)
 {
@@ -215,7 +214,6 @@ void Controller( Uni::Robot& r, void* dummy_data )
  	if(r.reward == false){
   		  r.lane[0] = Uni::DistanceNormalize(r.lane[0] + r.speed[0]);
    		  FollowPoint(r, r.lane[0], r.lane[1]);
-   		  printf("Follow Point\n");
    		  return;
  	}
    	else
@@ -296,7 +294,7 @@ inline void HighwayPose( double pose[3], double masterpose[3], int lanechoice)
 
 int main( int argc, char* argv[] )
 {
-	srand(4);
+	srand(3);
   // configure global robot settings
   Uni::Init( argc, argv );
   double masterpose[3];
