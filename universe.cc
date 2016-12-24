@@ -39,7 +39,7 @@ namespace Uni {
 
   // Robot static members
   unsigned int Robot::pixel_count(1000);
-  double Robot::range( 0.2 );
+  double Robot::range( 0.3 );
   double Robot::fov(  dtor(360.0) );
 }
 
@@ -299,6 +299,7 @@ void Uni::Init( int argc, char** argv )
 	rewarddisplaylist = glGenLists(1);
 	glNewList( rewarddisplaylist, GL_COMPILE );
 
+  //Draw reward circle around robots
 	glBegin( GL_POINTS);
 	for (double i = 0; i < 360; i = i+ 0.1)
 		{
@@ -448,8 +449,8 @@ void Uni::UpdateAll()
       gettimeofday( &now, NULL );
       double seconds = now.tv_sec + now.tv_usec/1e6;
       double interval = seconds - lastseconds;
-      fprintf( stderr, "[%d] FPS %.3f\r",(int)updates, period/interval );      
-      fflush(stdout);
+      //fprintf( stderr, "[%d] FPS %.3f\r",(int)updates, period/interval );
+      //fflush(stdout);
       lastseconds = seconds;      
     }
 
@@ -467,9 +468,22 @@ void Robot::Draw() const
 	  net_speed += robot->speed[0];
 	  best_speed += robot->speed_max;
   }
-  displayText(0.01, 0.01, 0, 0, 0, &(std::to_string(net_speed))[0]);
-  displayText(0.2, 0.01, 0, 0, 0, &(std::to_string(POPULATION_SIZE*0.004))[0]);
-  displayText(0.4, 0.01, 0, 0, 0, &(std::to_string(best_speed))[0]);
+  
+  //Display statistics on screen
+  double slowestspeed = POPULATION_SIZE*0.004;
+
+  //Display current velocity as percentage between slowest speed and fastest speed
+  displayText(0.01, 0.09, 0, 0, 0, "% of max speed");
+  float percentage = ((net_speed-slowestspeed)/(best_speed-slowestspeed))*100;
+  displayText(0.35, 0.09, 0, 0, 0, &(std::to_string(percentage)[0] ));
+
+  //Display current speed
+  displayText(0.01, 0.05, 0, 0, 0, "Current Speed");
+  displayText(0.35, 0.05, 0, 0, 0, &(std::to_string(net_speed)[0]));
+  
+  //Display max speed
+  displayText(0.01, 0.01, 0, 0, 0, "Max Speed");
+  displayText(0.35, 0.01, 0, 0, 0, &(std::to_string(best_speed)[0]));
 
   glPushMatrix();
   glTranslatef( pose[0], pose[1], 0 );
@@ -479,6 +493,8 @@ void Robot::Draw() const
 
   // draw the pre-compiled triangle for a body
   glCallList(displaylist);
+
+  //Draw the reward circle
   if (reward)
 	  glCallList(rewarddisplaylist);
   

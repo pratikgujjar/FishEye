@@ -11,22 +11,26 @@
 
 static bool invert = true;
 
+//Sigmoidal Decision Rule Implementation
 int Decide(int red_robots, int green_robots, int blue_robots, Uni::Robot& r)
 {
+	//Self information amY
 	float red_self_preference = r.preferences[0]/r.preferences[1];
 	float green_self_preference = r.preferences[0]/r.preferences[2];
 	float blue_self_preference = r.preferences[0]/r.preferences[3];
 
+	//Function value
 	if(1/(1 + (red_self_preference * (pow(eta,-(red_robots))))) > r.preferences[0])
-		return 1;
+		return 1; //Choose red
 	if(1/(1 + (green_self_preference * (pow(eta,-(green_robots))))) >  r.preferences[0])
-		return 2;
+		return 2; //Choose green 
 	if(1/(1 + (blue_self_preference * (pow(eta,-(blue_robots))))) >  r.preferences[0])
-		return 3;
-	return 0;
+		return 3; //Choose blue
+	return 0;	  //Go solo
 }
 
-void SpaceOut(Uni::Robot& r, Uni::Robot* other)
+//Proportional Controller to maintain distance between robots
+/*void SpaceOut(Uni::Robot& r, Uni::Robot* other)
 {
 	double halfworld = Uni::worldsize * 0.5;
 	double dx = other->pose[0] - r.pose[0];
@@ -59,8 +63,9 @@ void SpaceOut(Uni::Robot& r, Uni::Robot* other)
 	if(r.speed[0] < 0.004) r.speed[0] = 0.004;
 
 	return;
-}
+}*/
 
+//Follow the other robot by adjusting pose
 void FollowRobot(Uni::Robot& r, Uni::Robot* other){
 	  double halfworld = Uni::worldsize * 0.5;
 	  double dx = other->pose[0] - r.pose[0];
@@ -92,6 +97,7 @@ void FollowRobot(Uni::Robot& r, Uni::Robot* other){
 
 	  r.speed[1] = 0.4 * proportional  + 0.0002 * r.integral;
 
+	  //Wait for sometime in corformance to lane discipline before rewarding robot
 	  if( relative_heading < 0.017) {
 			  r.time_count++;
 			  if (r.time_count > 5){
@@ -102,12 +108,15 @@ void FollowRobot(Uni::Robot& r, Uni::Robot* other){
 			  }
 	  }
 
+	  //Take away reward to indicate robot is off lane
 	  if(relative_heading > 0.017 || fabs(r.theta_error[0]) > 0.00017){
 		  r.time_count = 0;
 		  r.reward = false;
 	  }
 }
 
+
+//Follow an imaginary moving point to do away with single lanes
 void FollowPoint(Uni::Robot& r, double x, double y){
 	  double halfworld = Uni::worldsize * 0.5;
 	  double dx = x - r.pose[0];
@@ -138,6 +147,7 @@ void FollowPoint(Uni::Robot& r, double x, double y){
 
 	  r.speed[1] = 0.4 * proportional  + 0.0002 * r.integral;
 
+	  //Wait before rewarding; Just as before
 	  if( fabs(r.pose[2]) < 0.017) {
 			  r.time_count++;
 			  if (r.time_count > 400){
@@ -166,6 +176,11 @@ void Controller( Uni::Robot& r, void* dummy_data )
   int blue_robots_inrange = 0;
   const size_t pixel_count = r.pixels.size();
 
+  //Determine a lot of closest robot parameters
+  //Sensor is 360 fov, but reponse will be generated for robots in 180 fov
+  //Adjusting pixel vector indices to achieve this
+
+  //Limit sensor field to absolutely the robot in the front
   dist = r.range;
   for( unsigned int p=495; p<=505; p++ ){
 	  unsigned int q = p;
@@ -221,10 +236,12 @@ void Controller( Uni::Robot& r, void* dummy_data )
 	  blue_robots_inrange += r.pixels[p].other_robots[2];
   }
 
+  //Cruise at full speed if no one in front
   if(closest < 0){
  	  r.speed[0] = r.speed_max;
    }
 
+   //Code to maintain lane-changing maneuver
   if (r.change_lane == true){
 	if(r.reward == false){
  		  r.lane[0] = Uni::DistanceNormalize(r.lane[0] + r.speed[0]);
@@ -236,6 +253,8 @@ void Controller( Uni::Robot& r, void* dummy_data )
   		  r.change_lane = false;
   }
 
+  //Code to determine if lane change is ncecessary
+  //Determine point to follow with respect to robot's current position, once
   if(r.reward ==  true && r.change_lane == false){
 	  if(r.speed[0] != r.speed_max){
 		  r.change_lane = true;
@@ -262,6 +281,7 @@ void Controller( Uni::Robot& r, void* dummy_data )
 //	  else SpaceOut(r, r.pixels[closest_blue].robot);
 //  }
 
+  //Change speed that of the closest, if closest is moving slowly
   if(closest > 0){
   	  if(r.speed_max > r.pixels[closest].robot->speed[0]){
 		  r.speed[0] = r.pixels[closest].robot->speed[0];
@@ -292,8 +312,10 @@ void Controller( Uni::Robot& r, void* dummy_data )
   }
 }
 
+//Code determining random initial positions in the lanes
 inline void HighwayPose( double pose[3], double masterpose[3], int lanechoice)
 {
+	//The rightmost start position is masterpose
     pose[0] = masterpose[0] = masterpose[0] - 0.02;
 
     if(lanechoice == 1)
@@ -313,6 +335,8 @@ int main( int argc, char* argv[] )
   Uni::Init( argc, argv );
   double masterpose[3];
   int count = 0;
+
+  srand(6);
   
   // parse remaining cmdline arguments to configure swarm
   int c=0;
